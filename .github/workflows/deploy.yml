@@ -32,11 +32,7 @@ jobs:
 
       - name: Auto-convert Excel to names_data.js
         run: |
-          if [ -f "Ozbek_ismlari_manosi_Toliq_Katalog_608bet.xlsx" ]; then
-            python convert_excel_to_json.py Ozbek_ismlari_manosi_Toliq_Katalog_608bet.xlsx
-          elif compgen -G "*.xlsx" > /dev/null; then
-            python convert_excel_to_json.py *.xlsx
-          fi
+          python convert_excel_to_json.py || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
