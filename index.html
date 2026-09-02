@@ -133,26 +133,27 @@
       gap: 8px;
     }
 
+    /* Компактная кнопка с лупой */
     .header-search-btn {
       background: var(--card-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-full);
-      padding: 6px 14px;
-      font-size: 0.85rem;
-      font-weight: 700;
+      width: 38px;
+      height: 38px;
+      font-size: 1.1rem;
       color: var(--text-main);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
       box-shadow: var(--shadow-sm);
       transition: all 0.2s;
+      flex-shrink: 0;
     }
 
     .header-search-btn:hover {
       border-color: var(--boy-color);
       background: var(--boy-bg);
-      color: var(--boy-color);
       transform: translateY(-1px);
     }
 
@@ -686,10 +687,15 @@
       text-decoration: underline;
     }
 
-    /* Модальное окно живого поиска */
+    /* Зафиксированный размер окна поиска (высота не прыгает при вводе) */
     .modal-search-window {
       max-width: 680px;
+      width: 100%;
+      height: 560px;
       max-height: 85vh;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
       border-radius: var(--radius-lg);
     }
 
@@ -700,6 +706,7 @@
       gap: 12px;
       background: #FAF7F2;
       border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
     }
 
     .search-modal-box {
@@ -740,20 +747,17 @@
     .search-results-scroll {
       padding: 18px 20px;
       overflow-y: auto;
-      max-height: calc(85vh - 70px);
+      flex-grow: 1;
+      height: 100%;
     }
 
     /* Мобильная адаптивность */
     @media (max-width: 768px) {
+      .modal-search-window { height: 85vh; min-height: 85vh; }
       .top10-grid, .gender-choice-grid, .form-grid-2 { grid-template-columns: 1fr; }
       .letter-btn { flex: 1 0 calc(14.28% - 6px); height: 38px; font-size: 0.9rem; }
       .welcome-title, .step-title { font-size: 1.35rem; }
       .btn-start-choice { padding: 14px 28px; font-size: 1.05rem; }
-    }
-
-    @media (max-width: 480px) {
-      .search-btn-label { display: none; }
-      .header-search-btn { padding: 6px 10px; }
     }
   </style>
 </head>
@@ -770,10 +774,9 @@
           <span class="logo-text">Ismlar<span class="logo-tld">.uz</span></span>
         </a>
         <div class="header-actions">
-          <!-- Кнопка поиска с лупой (слева от кнопки Tanlangan) -->
+          <!-- Кнопка поиска с лупой (только иконка) -->
           <button type="button" class="header-search-btn" id="btnOpenSearch" onclick="window.openSearchModal()" title="Qidiruv">
             <span>🔍</span>
-            <span class="search-btn-label">Qidiruv</span>
           </button>
           <!-- Кнопка "Tanlangan" -->
           <button type="button" class="header-fav-btn" id="btnOpenFavorites" onclick="window.openFavoritesModal()" title="Tanlangan ismlar (7 kun saqlanadi)">
