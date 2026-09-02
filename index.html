@@ -18,10 +18,10 @@
 </head>
 <body class="theme-neutral">
 
-  <!-- Фоновый младенческий узор (Baby pattern background) -->
+  <!-- Фоновый младенческий узор -->
   <div class="baby-bg-pattern" aria-hidden="true"></div>
 
-  <!-- ВСЕГДА ВИДИМАЯ ВЕРХНЯЯ ПАНЕЛЬ (Поиск и Избранное) -->
+  <!-- ВСЕГДА ВИДИМАЯ ВЕРХНЯЯ ПАНЕЛЬ -->
   <header class="sticky-header" id="stickyHeader">
     <div class="header-container">
       <div class="brand-row">
@@ -29,15 +29,15 @@
           <span class="logo-icon">🍼</span>
           <span class="logo-text">Ismlar<span class="logo-tld">.uz</span></span>
         </a>
-        <!-- Кнопка "Избранное" (хранится 7 дней) -->
-        <button type="button" class="header-fav-btn" id="btnOpenFavorites" title="Sevimlilar (7 kun saqlanadi)">
+        <!-- Кнопка "Избранное" -->
+        <button type="button" class="header-fav-btn" id="btnOpenFavorites" onclick="window.openFavoritesModal()" title="Sevimlilar (7 kun saqlanadi)">
           <span class="fav-icon">❤️</span>
           <span class="fav-label" id="favLabelText">Sevimlilar</span>
           <span class="fav-counter-badge" id="favHeaderBadge">0</span>
         </button>
       </div>
 
-      <!-- ВСЕГДА ВИДИМЫЙ ПОИСК (Always visible search bar) -->
+      <!-- Постоянный поиск -->
       <div class="search-bar-wrap">
         <div class="search-input-box">
           <span class="search-icon">🔍</span>
@@ -48,20 +48,19 @@
     </div>
   </header>
 
-  <!-- ВЕРХНИЙ РЕКЛАМНЫЙ БАННЕР (Placeholder 1) -->
+  <!-- Верхний рекламный баннер -->
   <div class="ad-banner-wrap container">
     <div class="ad-placeholder banner-top" id="adTop">
       <span class="ad-tag">Reklama / Реклама</span>
       <div class="ad-content">
         <p>📱 Banner Reklama joyi (728x90 / 320x100)</p>
-        <small>Bu yerda Google AdSense yoki Telegram Ads joylashishi mumkin</small>
       </div>
     </div>
   </div>
 
   <main class="main-content container">
 
-    <!-- ШАГ 1: ПРИВЕТСТВИЕ И ВЫБОР АЛФАВИТА (Welcome Screen) -->
+    <!-- ШАГ 1: ПРИВЕТСТВИЕ И ВЫБОР АЛФАВИТА -->
     <section class="wizard-step step-welcome" id="stepWelcome">
       <div class="welcome-card">
         <div class="baby-illustration">👶✨</div>
@@ -72,7 +71,7 @@
         <p class="prompt-text" id="chooseAlphabetPrompt">Dastlab o'zingizga qulay alifboni tanlang:</p>
         
         <div class="alphabet-choice-btns">
-          <button type="button" class="choice-card-btn" id="btnChooseLotin">
+          <button type="button" class="choice-card-btn" id="btnChooseLotin" onclick="window.selectScript('lotin')">
             <span class="choice-icon">🅰️</span>
             <div class="choice-text-wrap">
               <strong class="choice-name">Ismlar lotin alifbosida</strong>
@@ -81,7 +80,7 @@
             <span class="choice-arrow">➔</span>
           </button>
 
-          <button type="button" class="choice-card-btn" id="btnChooseKirill">
+          <button type="button" class="choice-card-btn" id="btnChooseKirill" onclick="window.selectScript('kirill')">
             <span class="choice-icon">🔤</span>
             <div class="choice-text-wrap">
               <strong class="choice-name">Исмлар кирилл алифбосида</strong>
@@ -91,23 +90,3 @@
           </button>
         </div>
       </div>
-    </section>
-
-    <!-- ШАГ 2: ВЫБОР ПОЛА РЕБЕНКА (Gender Step) -->
-    <section class="wizard-step step-gender" id="stepGender" style="display: none;">
-      <div class="step-card">
-        <div class="step-badge" id="stepBadgeGender">2-bosqich</div>
-        <h2 class="step-title" id="genderTitle">Farzandingiz jinsini tanlang</h2>
-        <p class="step-desc" id="genderDesc">Tanlovingizga ko'ra mos ismlar saralab beriladi</p>
-
-        <div class="gender-choice-grid">
-          <button type="button" class="gender-card-btn boy" id="btnSelectBoy">
-            <span class="gender-avatar">👦</span>
-            <span class="gender-title" id="lblBoy">O'g'il bola</span>
-            <span class="gender-sub" id="lblBoySub">Jasur, mard, baxtli</span>
-          </button>
-          
-          <button type="button" class="gender-card-btn girl" id="btnSelectGirl">
-            <span class="gender-avatar">👧</span>
-            <span class="gender-title" id="lblGirl">Qiz bola</span>
-            <span class="gender-sub" id="lblGirlSub">Go'zal, latofatli, oqila
