@@ -512,16 +512,48 @@
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
       padding: 14px 16px;
-      cursor: pointer;
       transition: all 0.2s;
     }
 
     .top10-card:hover {
       border-color: var(--boy-color);
-      background: #FFFFFF;
       box-shadow: var(--shadow-sm);
     }
     body.gender-f .top10-card:hover { border-color: var(--girl-color); }
+
+    .top10-card-header {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .top10-card.open {
+      background: #FFFFFF;
+      border-color: var(--boy-color);
+      box-shadow: var(--shadow-md);
+    }
+    body.gender-f .top10-card.open {
+      border-color: var(--girl-color);
+    }
+
+    .top10-chevron {
+      font-size: 0.75rem;
+      color: #9C9184;
+      transition: transform 0.25s ease;
+      display: inline-block;
+      margin-left: 2px;
+    }
+
+    .top10-card-body {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #F0EAE1;
+      animation: fadeInDown 0.25s ease;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     .top10-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
     .rank-badge { font-weight: 700; font-size: 0.85rem; padding: 2px 8px; border-radius: var(--radius-sm); background: #EAE2D5; }
@@ -609,7 +641,7 @@
     .save-status-badge { background: #E8F5E9; color: #2E7D32; padding: 5px 12px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; }
     .error-msg { color: #D32F2F; font-size: 0.82rem; margin-top: 4px; }
 
-    /* Чистый подвал сайта */
+    /* Чистый подвал сайта и скрытая ссылка Suniy.Studio */
     .site-footer {
       margin-top: 40px; border-top: 1px solid var(--border-light);
       padding: 28px 0 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem;
@@ -620,7 +652,16 @@
     }
     .footer-desc { max-width: 520px; margin: 0 auto 14px; font-size: 0.88rem; }
     .footer-bottom-row { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid #EFE8DC; font-size: 0.78rem; }
-    .tma-status { background: #EAE3D7; padding: 2px 8px; border-radius: var(--radius-full); }
+
+    .studio-link {
+      color: inherit;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .studio-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
 
     /* Мобильная адаптивность */
     @media (max-width: 768px) {
@@ -799,7 +840,7 @@
     </div>
   </div>
 
-  <!-- ЧИСТЫЙ ПОДВАЛ САЙТА (БЕЗ УПОМИНАНИЯ КНИГИ И БЕЗ ССЫЛКИ НА АДМИНКУ) -->
+  <!-- ПОДВАЛ САЙТА (Produced by Suniy.Studio со скрытой ссылкой) -->
   <footer class="site-footer">
     <div class="container footer-content">
       <div class="footer-brand">
@@ -811,7 +852,9 @@
       </p>
       <div class="footer-bottom-row">
         <span>© 2026 Ismlar.uz — Barcha huquqlar himoyalangan.</span>
-        <span class="tma-status" id="tmaStatusBadge">🌐 Web versiya</span>
+        <span class="footer-produced">
+          Produced by <a href="https://suniy.studio/" target="_blank" rel="noopener noreferrer" class="studio-link"><b>Suniy.Studio</b></a>
+        </span>
       </div>
     </div>
   </footer>
@@ -839,7 +882,7 @@
     </div>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО: АВТОРИЗАЦИЯ АДМИНИСТРАТОРА (По логину и паролю, без подсказок) -->
+  <!-- МОДАЛЬНОЕ ОКНО: АВТОРИЗАЦИЯ АДМИНИСТРАТОРА (ismlar.uz/admin) -->
   <div class="modal-overlay" id="modalAdminLogin">
     <div class="modal-window modal-sm">
       <div class="modal-header">
@@ -928,10 +971,9 @@
     </div>
   </div>
 
-  <!-- Подключение внешней базы (если сгенерирована), иначе работает встроенная -->
   <script src="names_data.js"></script>
 
-  <!-- ВСТРОЕННЫЙ JAVASCRIPT: ТОЛЬКО ЛАТИНИЦА, ГАРАНТИРОВАННЫЙ КЛИК -->
+  <!-- Скрипт логики с аккордеоном в Топ-10 -->
   <script>
   (function () {
     'use strict';
@@ -940,7 +982,7 @@
     const ADMIN_USER_DEFAULT = "admin";
     const ADMIN_PASS_DEFAULT = "Admin#2026";
 
-    // Встроенная стартовая база имён (ТОЛЬКО НА ЛАТИНИЦЕ)
+    // Встроенная стартовая база имён (только латиница)
     const FALLBACK_NAMES = [
       {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va e'zoz sohibining, ya'ni Allohning quli.", v:1420},
       {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Payg'ambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
@@ -988,7 +1030,6 @@
       window.ALL_NAMES = FALLBACK_NAMES;
     }
 
-    // Узбекский латинский алфавит (29 букв)
     const LATIN_ALPHABET = [
       'A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
       'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 
@@ -1005,7 +1046,6 @@
       isAdmin: false
     };
 
-    // Глобальные обработчики
     window.startChoosing = function () {
       showStep('gender');
     };
@@ -1197,10 +1237,12 @@
 
       const item = (window.ALL_NAMES || []).find(x => x.id === itemId);
       if (item) {
+        const total = item.v + state.userViews[itemId];
         const badge = document.getElementById(`viewBadge_${itemId}`);
-        if (badge) badge.innerHTML = `👁️ ${(item.v + state.userViews[itemId]).toLocaleString()}`;
+        if (badge) badge.innerHTML = `👁️ ${total.toLocaleString()}`;
+        const top10Badge = document.getElementById(`top10ViewBadge_${itemId}`);
+        if (top10Badge) top10Badge.innerHTML = `👁️ ${total.toLocaleString()}`;
       }
-      renderTop10();
     }
 
     function getTotalViews(item) {
@@ -1361,6 +1403,7 @@
       return wrap;
     }
 
+    // Раскрывающийся аккордеон прямо внутри Топ-10
     function renderTop10() {
       const grid = document.getElementById('top10Grid');
       if (!grid) return;
@@ -1372,35 +1415,87 @@
       filtered.slice(0, 10).forEach((item, index) => {
         const primaryName = item.l || '';
         const isFav = isFavorite(item.id);
+        const totalViews = getTotalViews(item);
+        const rank = index + 1;
+
+        const shareUrl = window.location.href.split('#')[0];
+        const shareText = `👶 ${primaryName} — ${item.m || ''}\n\nManba: Ismlar.uz`;
+        const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+
         const card = document.createElement('div');
-        card.className = `top10-card rank-${index + 1}`;
+        card.className = `top10-card rank-${rank}`;
+        card.id = `top10_card_${item.id}`;
         card.innerHTML = `
-          <div class="top10-row-top">
-            <span class="rank-badge">#${index + 1}</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <button type="button" class="btn-fav-toggle fav-btn-${item.id}">${isFav ? '❤️' : '🤍'}</button>
-              <span class="view-badge">👁️ ${getTotalViews(item).toLocaleString()}</span>
+          <div class="top10-card-header">
+            <div class="top10-row-top">
+              <span class="rank-badge">#${rank}</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-fav-toggle fav-btn-${item.id}" title="Tanlanganlarga qo'shish">
+                  ${isFav ? '❤️' : '🤍'}
+                </button>
+                <span class="view-badge" id="top10ViewBadge_${item.id}">👁️ ${totalViews.toLocaleString()}</span>
+                <span class="top10-chevron">▼</span>
+              </div>
+            </div>
+            <div class="top10-name-text">${primaryName}</div>
+            <div class="top10-meaning-preview">${item.m || ''}</div>
+          </div>
+          <div class="top10-card-body" style="display: none;">
+            <div class="card-meta-tags">
+              <span class="meta-chip"><b>Kelib chiqishi:</b> ${item.lang || "O'zbekcha"}</span>
+              <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 O'g'il bola" : "👧 Qiz bola"}</span>
+            </div>
+            <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>
+            <div class="card-share-block">
+              <div class="share-buttons-group">
+                <a href="${tgUrl}" target="_blank" class="share-action-btn tg">✈️ Telegram</a>
+                <a href="${waUrl}" target="_blank" class="share-action-btn wa">💬 WhatsApp</a>
+                <button type="button" class="share-action-btn copy btn-copy-top10" data-text="${shareText}">📋 Nusxa olish</button>
+              </div>
             </div>
           </div>
-          <div class="top10-name-text">${primaryName}</div>
-          <div class="top10-meaning-preview">${item.m || ''}</div>
         `;
 
-        card.querySelector(`.fav-btn-${item.id}`).addEventListener('click', (e) => {
+        // Клик по сердечку
+        const favBtn = card.querySelector(`.fav-btn-${item.id}`);
+        favBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           window.toggleFavorite(item.id);
         });
 
-        card.addEventListener('click', () => {
-          state.activeLetter = primaryName.charAt(0).toUpperCase();
-          window.selectLetter(state.activeLetter);
-          setTimeout(() => {
-            const el = document.getElementById(`accordion_${item.id}`);
-            if (el) {
-              if (!el.classList.contains('open')) el.querySelector('.accordion-header').click();
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }, 150);
+        // Клик по копированию
+        const copyBtn = card.querySelector('.btn-copy-top10');
+        copyBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const txt = copyBtn.getAttribute('data-text');
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(txt).then(() => alert("Ism ma'lumoti nusxalandi!"));
+          } else {
+            prompt("Nusxalang:", txt);
+          }
+        });
+
+        // Раскрытие аккордеона прямо на месте в Топ 10
+        const cardHeader = card.querySelector('.top10-card-header');
+        cardHeader.addEventListener('click', () => {
+          const body = card.querySelector('.top10-card-body');
+          const chevron = card.querySelector('.top10-chevron');
+          const preview = card.querySelector('.top10-meaning-preview');
+          const isOpen = body.style.display === 'block';
+
+          if (isOpen) {
+            body.style.display = 'none';
+            card.classList.remove('open');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+            if (preview) preview.style.display = '-webkit-box';
+          } else {
+            body.style.display = 'block';
+            card.classList.add('open');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+            if (preview) preview.style.display = 'none';
+            recordView(item.id);
+          }
         });
 
         grid.appendChild(card);
@@ -1497,7 +1592,6 @@
       }
     }
 
-    // Автоматическое открытие админ-панели при переходе на ismlar.uz/admin или #admin
     function checkAdminUrl() {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
