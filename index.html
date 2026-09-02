@@ -118,7 +118,7 @@
     <!-- ОСНОВНОЙ КАТАЛОГ -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- Алфавитная панель -->
+      <!-- СЕКЦИЯ 1: АЛФАВИТНАЯ ПАНЕЛЬ -->
       <section class="section-alphabet" id="sectionAlphabet">
         <div class="section-header-row">
           <h2 class="section-heading" id="alphabetHeading">
@@ -129,7 +129,7 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- Вывод имён по выбранной букве (над блоком Топ-10) -->
+      <!-- СЕКЦИЯ 2: ВЫВОД ВСЕХ ИМЕН НА ВЫБРАННУЮ БУКВУ -->
       <section class="section-letter-names" id="sectionLetterNames" style="display: none;">
         <div class="letter-results-header">
           <div class="letter-title-badge">
@@ -145,7 +145,7 @@
         <div class="names-accordion-list" id="letterNamesList"></div>
       </section>
 
-      <!-- Средний рекламный баннер -->
+      <!-- СРЕДНИЙ РЕКЛАМНЫЙ БАННЕР -->
       <div class="ad-banner-wrap">
         <div class="ad-placeholder banner-middle" id="adMiddle">
           <span class="ad-tag">Reklama / Реклама</span>
@@ -155,7 +155,7 @@
         </div>
       </div>
 
-      <!-- Топ 10 часто просматриваемых имён (ПК = 2 колонки, Мобильный = 1 колонка) -->
+      <!-- СЕКЦИЯ 3: ТОП 10 ЧАСТО ПРОСМАТРИВАЕМЫХ ИМЕН -->
       <section class="section-top10" id="sectionTop10">
         <div class="section-header-row top10-header">
           <div class="top10-title-wrap">
@@ -173,7 +173,7 @@
         <div class="top10-grid" id="top10Grid"></div>
       </section>
 
-      <!-- Результаты поиска -->
+      <!-- СЕКЦИЯ ДЛЯ РЕЗУЛЬТАТОВ ПОИСКА -->
       <section class="section-search-results" id="sectionSearchResults" style="display: none;">
         <div class="section-header-row">
           <h2 class="section-heading" id="searchResHeading">
@@ -188,7 +188,7 @@
 
   </main>
 
-  <!-- Нижний рекламный баннер -->
+  <!-- НИЖНИЙ РЕКЛАМНЫЙ БАННЕР -->
   <div class="ad-banner-wrap container">
     <div class="ad-placeholder banner-bottom" id="adBottom">
       <span class="ad-tag">Reklama / Реклама</span>
@@ -198,7 +198,7 @@
     </div>
   </div>
 
-  <!-- Подвал сайта -->
+  <!-- ПОДВАЛ САЙТА -->
   <footer class="site-footer">
     <div class="container footer-content">
       <div class="footer-brand">
@@ -218,7 +218,7 @@
     </div>
   </footer>
 
-  <!-- Модальное окно: Избранное (Хранение 7 дней) -->
+  <!-- МОДАЛЬНОЕ ОКНО: ИЗБРАННОЕ -->
   <div class="modal-overlay" id="modalFavorites" style="display: none;">
     <div class="modal-window">
       <div class="modal-header">
@@ -241,7 +241,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно: Вход в админ-панель -->
+  <!-- МОДАЛЬНОЕ ОКНО: АВТОРИЗАЦИЯ АДМИНИСТРАТОРА -->
   <div class="modal-overlay" id="modalAdminLogin" style="display: none;">
     <div class="modal-window modal-sm">
       <div class="modal-header">
@@ -265,7 +265,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно: Редактирование имён -->
+  <!-- МОДАЛЬНОЕ ОКНО: АДМИН-ПАНЕЛЬ РЕДАКТИРОВАНИЯ ИМЁН -->
   <div class="modal-overlay" id="modalAdminPanel" style="display: none;">
     <div class="modal-window modal-lg">
       <div class="modal-header">
@@ -291,7 +291,6 @@
 
         <div class="admin-edit-form" id="adminEditForm" style="display: none;">
           <h4 class="form-section-title">Ism ma'lumotlarini tahrirlash: <span id="editingNameDisplay"></span></h4>
-          
           <input type="hidden" id="editItemId">
 
           <div class="form-grid-2">
@@ -339,7 +338,410 @@
     </div>
   </div>
 
+  <!-- Подключение внешней базы (если сгенерирована), иначе работает встроенная -->
   <script src="names_data.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+
+  <!-- Встроенный скрипт логики (гарантирует немедленную работу кнопок) -->
+  <script>
+  (function () {
+    'use strict';
+
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const ADMIN_PASSWORD_DEFAULT = "admin2026";
+
+    // Встроенная стартовая база имён
+    const FALLBACK_NAMES = [
+      {"id":1,"k":"Абдулазиз","l":"Abdulaziz","g":"m","lang":"Арабча","m":"Иззат ва эъзоз соҳибининг, яъни Аллоҳнинг қули.","v":1420},
+      {"id":2,"k":"Муҳаммад","l":"Muhammad","g":"m","lang":"Арабча","m":"Мақтовга, олқишларга сазовор. Пайғамбаримиз (с.а.в.)нинг муборак исмлари.","v":1850},
+      {"id":3,"k":"Алишер","l":"Alisher","g":"m","lang":"Арабча / Форс-тожикча","m":"Шердек жасур, довюрак бўлиб ўссин ва Али қўллаб юрсин.","v":1280},
+      {"id":4,"k":"Амирхон","l":"Amirxon","g":"m","lang":"Арабча / Ўзбекча","m":"Ҳоким, йўлбошчи; юксак мартабали, эъзозли ўғил.","v":980},
+      {"id":5,"k":"Беҳрўз","l":"Behro‘z","g":"m","lang":"Форс-тожикча","m":"Бахтли, саодатли кунда туғилган бола.","v":1120},
+      {"id":6,"k":"Жавоҳир","l":"Javohir","g":"m","lang":"Арабча","m":"Қимматбаҳо тошлар, жавоҳирлар; бебаҳо, қимматли фарзанд.","v":1150},
+      {"id":7,"k":"Сардор","l":"Sardor","g":"m","lang":"Форс-тожикча","m":"Етакчи, бошлиқ, раҳбар; лашкарбоши, йўлбошчи.","v":940},
+      {"id":8,"k":"Шерзод","l":"Sherzod","g":"m","lang":"Форс-тожикча","m":"Шер боласи, довюрак, жасурлар авлодига мансуб бола.","v":870},
+      {"id":9,"k":"Темур","l":"Temur","g":"m","lang":"Ўзбекча","m":"Темирдек мустаҳкам, маҳкам, чидамли, умри узоқ бола.","v":1050},
+      {"id":10,"k":"Имрон","l":"Imron","g":"m","lang":"Арабча","m":"Тириклик, барҳаётлик, узоқ умр кўрувчи, ободлик рамзи.","v":1390},
+      {"id":11,"k":"Билол","l":"Bilol","g":"m","lang":"Арабча","m":"Янги туққан ой (ҳилол) ёки соғлом сувдек азиз бола.","v":920},
+      {"id":12,"k":"Даврон","l":"Davron","g":"m","lang":"Арабча","m":"Давр сурсин, умри шодон, бахтиёр ўтсин, толеи порлоқ бўлсин.","v":780},
+      {"id":13,"k":"Юсуф","l":"Yusuf","g":"m","lang":"Қадимий яҳудийча / Арабча","m":"Ҳуснда тенгсиз, гўзаллик рамзи бўлган бола.","v":1360},
+      {"id":14,"k":"Улуғбек","l":"Ulug‘bek","g":"m","lang":"Ўзбекча","m":"Буюк ҳукмдор, буюк султон, бекларнинг энг улуғи.","v":1120},
+      {"id":15,"k":"Умар","l":"Umar","g":"m","lang":"Арабча","m":"Барҳаёт, узоқ умр кўрувчи, табаррук ва адолатли инсон.","v":1250},
+      {"id":16,"k":"Рустам","l":"Rustam","g":"m","lang":"Форс-тожикча","m":"Улкан гавдали, кучли, довюрак баҳодир, паҳлавон.","v":960},
+      {"id":17,"k":"Санжар","l":"Sanjar","g":"m","lang":"Арабча","m":"Шиддатли, ўткир, кучли, ғолиб ва музаффар йигит.","v":820},
+      {"id":18,"k":"Ойбек","l":"Oybek","g":"m","lang":"Ўзбекча","m":"Беклар авлодига мансуб, ойдек кўркам ва бахтли бола.","v":880},
+      {"id":19,"k":"Отабек","l":"Otabek","g":"m","lang":"Ўзбекча","m":"Шаҳзода, хонзода; беклар бошлиғи, элнинг сардори.","v":850},
+      {"id":20,"k":"Жасур","l":"Jasur","g":"m","lang":"Арабча","m":"Қайтмас, мард, журъатли, жасоратли ва довюрак бола.","v":910},
+      {"id":21,"k":"Мадина","l":"Madina","g":"f","lang":"Арабча","m":"Муқаддас шаҳар, зиёратгоҳ Мадина шаҳри номидан олинган гўзал қиз.","v":1790},
+      {"id":22,"k":"Зуҳро","l":"Zuhro","g":"f","lang":"Арабча","m":"Чўлпон юлдузидек порлоқ ва гўзал қиз.","v":1350},
+      {"id":23,"k":"Ясмина","l":"Yasmina","g":"f","lang":"Арабча / Форс-тожикча","m":"Хушбўй ёсумин (жасмин) гулидек нафис, латофатли ва севимли қиз.","v":1640},
+      {"id":24,"k":"Фотима","l":"Fotima","g":"f","lang":"Арабча","m":"Пайғамбаримиз (с.а.в.)нинг суюкли қизларининг муборак исмлари.","v":1510},
+      {"id":25,"k":"Райҳона","l":"Rayhona","g":"f","lang":"Арабча","m":"Райҳондек ёқимли, хушбўй ва дилкаш қиз.","v":1470},
+      {"id":26,"k":"Муслима","l":"Muslima","g":"f","lang":"Арабча","m":"Мусулмон, художўй, иймонли ва одобли қиз.","v":1310},
+      {"id":27,"k":"Самира","l":"Samira","g":"f","lang":"Арабча","m":"Суҳбатдош, дилкаш, ёқимтой ва ширинсўз қиз.","v":1260},
+      {"id":28,"k":"Шаҳзода","l":"Shahzoda","g":"f","lang":"Форс-тожикча","m":"Шоҳлар авлодига мансуб, аслзода, маликадек ҳурматли қиз.","v":1040},
+      {"id":29,"k":"Ойша","l":"Oysha","g":"f","lang":"Арабча","m":"Яшовчи, барҳаёт, саодатли ва покдомон аёл.","v":1420},
+      {"id":30,"k":"Гулнора","l":"Gulnora","g":"f","lang":"Форс-тожикча","m":"Анор гулидек чиройли, чеҳраси қирмизи, гўзал қиз.","v":980},
+      {"id":31,"k":"Дилдора","l":"Dildora","g":"f","lang":"Форс-тожикча","m":"Дилдан севилган, дилни ром қилувчи суюкли қиз.","v":950},
+      {"id":32,"k":"Лола","l":"Lola","g":"f","lang":"Форс-тожикча","m":"Лоладек яшнаган, гўзал ва баҳорий тароватли қиз.","v":890},
+      {"id":33,"k":"Барно","l":"Barno","g":"f","lang":"Форс-тожикча","m":"Ёш, навжувон; чиройли, хушбичим, келишган соҳибжамол.","v":840},
+      {"id":34,"k":"Зилола","l":"Zilola","g":"f","lang":"Арабча","m":"Тиниқ булоқ сувидек покиза, тоза ва беғубор қиз.","v":860},
+      {"id":35,"k":"Шаҳноза","l":"Shahnoza","g":"f","lang":"Форс-тожикча","m":"Шоҳона нозли, назокатли, латофатли ва олийжаноб қиз.","v":910},
+      {"id":36,"k":"Севинч","l":"Sevinch","g":"f","lang":"Ўзбекча","m":"Шодлик, бахтиёрлик, оиланинг севинчи бўлган қиз.","v":1130},
+      {"id":37,"k":"Юлдуз","l":"Yulduz","g":"f","lang":"Ўзбекча","m":"Толеи юлдуздек юксак ва порлоқ бўлсин, саодатли бўлсин.","v":930},
+      {"id":38,"k":"Озода","l":"Ozoda","g":"f","lang":"Форс-тожикча","m":"Эркин, ҳур; тоза, покиза, саранжом ва бегуноҳ қиз.","v":920},
+      {"id":39,"k":"Сарвиноз","l":"Sarvinoz","g":"f","lang":"Форс-тожикча","m":"Сарв дарахтидек хушқомат, тик қадди-қоматли ва нозик қиз.","v":910},
+      {"id":40,"k":"Ҳадича","l":"Hadicha","g":"f","lang":"Арабча","m":"Чақалоқларнинг энг азизи, муборак исм.","v":1180}
+    ];
+
+    if (!window.ALL_NAMES || !Array.isArray(window.ALL_NAMES) || window.ALL_NAMES.length === 0) {
+      window.ALL_NAMES = FALLBACK_NAMES;
+    }
+
+    const ALPHABETS = {
+      lotin: [
+        'A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
+        'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 
+        'V', 'X', 'Y', 'Z', 'Oʻ', 'Gʻ', 'Sh', 'Ch'
+      ],
+      kirill: [
+        'А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 
+        'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 
+        'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Ъ', 'Ь', 'Э', 'Ю', 
+        'Я', 'Ў', 'Қ', 'Ғ', 'Ҳ'
+      ]
+    };
+
+    const TRANSLATIONS = {
+      lotin: {
+        siteTitle: "Ismlar.uz — O'zbek ismlari ma'nosi to'liq katalogi",
+        welcomeTitle: "Farzandingiz uchun eng chiroyli va ma'noli ismni tanlang",
+        welcomeSub: "12 000+ dan ortiq o'zbek xalq ismlarining to'liq ma'nosi, kelib chiqishi va izohi.",
+        chooseAlifbo: "Dastlab o'zingizga qulay alifboni tanlang:",
+        stage2Badge: "2-bosqich",
+        genderTitle: "Farzandingiz jinsini tanlang",
+        genderDesc: "Tanlovingizga ko'ra mos ismlar saralab beriladi",
+        lblBoy: "O'g'il bola",
+        lblBoySub: "Jasur, mard, baxtli",
+        lblGirl: "Qiz bola",
+        lblGirlSub: "Go'zal, latofatli, oqila",
+        alphabetHeading: "Harf bo'yicha ismlar",
+        alphabetHint: "Bosh harfni tanlang:",
+        searchPlaceholder: "Ism bo'yicha tezkor qidiruv...",
+        searchResHeading: "Qidiruv natijalari",
+        top10Title: "Eng ko'p ko'rilgan 10 ta ism",
+        top10BoyBadge: "O'g'il bolalar uchun",
+        top10GirlBadge: "Qiz bolalar uchun",
+        liveViewsNote: "Haqiqiy foydalanuvchilar ko'rishlari asosida",
+        altScriptLabel: "Kirillcha yozilishi:",
+        originLabel: "Kelib chiqishi:",
+        genderBoyTag: "O'g'il bola",
+        genderGirlTag: "Qiz bola",
+        copiedText: "Ism ma'lumoti nusxalandi!",
+        noNamesFound: "Bu bo'limda ismlar topilmadi",
+        letterTitleSuffix: "harfi bilan boshlanuvchi ismlar",
+        itemsFound: "ta ism topildi",
+        footerRef: "Manba: E. A. Begmatovning «O'zbek ismlari ma'nosi» fundamental kitobi asosida.",
+        favTitle: "Sevimlilar ro'yxati",
+        favHeaderBtn: "Sevimlilar",
+        favBannerText: "⏳ Ismlar ushbu qurilmada ro'yxatdan o'tmasdan <b>7 kun</b> saqlanadi.",
+        favEmpty: "Hozircha sevimli ismlar yo'q. Istalgan ism yonidagi yurakcha (🤍) tugmasini bosing.",
+        daysLeft: "kun qoldi",
+        hoursLeft: "soat qoldi"
+      },
+      kirill: {
+        siteTitle: "Ismlar.uz — Ўзбек исмлари маъноси тўлиқ каталоги",
+        welcomeTitle: "Фарзандингиз учун энг чиройли ва маъноли исмни танланг",
+        welcomeSub: "12 000+ дан ортиқ ўзбек халқ исмларининг тўлиқ маъноси, келиб чиқиши ва изоҳи.",
+        chooseAlifbo: "Дастлаб ўзингизга қулай алифбони танланг:",
+        stage2Badge: "2-босқич",
+        genderTitle: "Фарзандингиз жинсини танланг",
+        genderDesc: "Танловингизга кўра мос исмлар саралаб берилади",
+        lblBoy: "Ўғил бола",
+        lblBoySub: "Жасур, мард, бахтли",
+        lblGirl: "Қиз бола",
+        lblGirlSub: "Гўзал, латофатли, оқила",
+        alphabetHeading: "Ҳарф бўйича исмлар",
+        alphabetHint: "Бош ҳарфни танланг:",
+        searchPlaceholder: "Исм бўйича тезкор қидирув...",
+        searchResHeading: "Қидирув натижалари",
+        top10Title: "Энг кўп кўрилган 10 та исм",
+        top10BoyBadge: "Ўғил болалар учун",
+        top10GirlBadge: "Қиз болалар учун",
+        liveViewsNote: "Ҳақиқий фойдаланувчилар кўришлари асосида",
+        altScriptLabel: "Лотинча ёзилиши:",
+        originLabel: "Келиб чиқиши:",
+        genderBoyTag: "Ўғил бола",
+        genderGirlTag: "Қиз бола",
+        copiedText: "Исм маълумоти нусхаланди!",
+        noNamesFound: "Бу бўлимда исмлар топилмади",
+        letterTitleSuffix: "ҳарфи билан бошланувчи исмлар",
+        itemsFound: "та исм топилди",
+        footerRef: "Манба: Э. А. Бегматовнинг «Ўзбек исмлари маъноси» фундаментал китоби асосида.",
+        favTitle: "Севимлилар рўйхати",
+        favHeaderBtn: "Севимлилар",
+        favBannerText: "⏳ Исмлар ушбу қурилмада рўйхатдан ўтмасдан <b>7 кун</b> сақланади.",
+        favEmpty: "Ҳозирча севимли исмлар йўқ. Исталган исм ёнидаги юракча (🤍) тугмасини босинг.",
+        daysLeft: "кун қолди",
+        hoursLeft: "соат қолди"
+      }
+    };
+
+    const state = {
+      script: 'lotin',
+      gender: 'm',
+      activeLetter: null,
+      searchQuery: '',
+      openedIds: new Set(),
+      userViews: {},
+      favorites: [],
+      isAdmin: false
+    };
+
+    // Глобальные функции для гарантированного клика
+    window.selectScript = function (script) {
+      state.script = script;
+      state.activeLetter = null;
+      updateLocalization();
+      showStep('gender');
+    };
+
+    window.selectGender = function (gender) {
+      state.gender = gender;
+      state.activeLetter = null;
+      updateLocalization();
+      showStep('catalog');
+    };
+
+    window.selectLetter = function (letter) {
+      if (state.activeLetter === letter) {
+        state.activeLetter = null;
+        const sec = document.getElementById('sectionLetterNames');
+        if (sec) sec.style.display = 'none';
+        renderAlphabetBar();
+        return;
+      }
+
+      state.activeLetter = letter;
+      renderAlphabetBar();
+
+      const isLotin = state.script === 'lotin';
+      const names = (window.ALL_NAMES || []).filter(item => {
+        if (item.g !== state.gender) return false;
+        const name = isLotin ? item.l : item.k;
+        if (!name) return false;
+
+        if (letter === 'Oʻ' || letter === "O'") return name.startsWith("Oʻ") || name.startsWith("O'") || name.startsWith("O‘");
+        if (letter === 'Gʻ' || letter === "G'") return name.startsWith("Gʻ") || name.startsWith("G'") || name.startsWith("G‘");
+        if (letter === 'Sh') return name.startsWith("Sh") || name.startsWith("sh");
+        if (letter === 'Ch') return name.startsWith("Ch") || name.startsWith("ch");
+        if (letter === 'O') return name.startsWith('O') && !name.startsWith("Oʻ") && !name.startsWith("O'");
+        if (letter === 'G') return name.startsWith('G') && !name.startsWith("Gʻ") && !name.startsWith("G'");
+        if (letter === 'S') return name.startsWith('S') && !name.startsWith("Sh");
+        if (letter === 'C') return name.startsWith('C') && !name.startsWith("Ch");
+
+        return name.toUpperCase().startsWith(letter.toUpperCase());
+      });
+
+      renderLetterNamesSection(letter, names);
+    };
+
+    window.openFavoritesModal = function () {
+      renderFavoritesModal();
+      const m = document.getElementById('modalFavorites');
+      if (m) m.style.display = 'flex';
+    };
+
+    window.closeFavoritesModal = function () {
+      const m = document.getElementById('modalFavorites');
+      if (m) m.style.display = 'none';
+    };
+
+    window.openAdminModal = function () {
+      if (state.isAdmin) {
+        document.getElementById('modalAdminPanel').style.display = 'flex';
+      } else {
+        document.getElementById('modalAdminLogin').style.display = 'flex';
+      }
+    };
+
+    window.closeAdminLoginModal = function () {
+      document.getElementById('modalAdminLogin').style.display = 'none';
+    };
+
+    window.closeAdminPanelModal = function () {
+      document.getElementById('modalAdminPanel').style.display = 'none';
+    };
+
+    window.toggleFavorite = function (itemId) {
+      const idx = state.favorites.findIndex(f => f.id === itemId);
+      if (idx !== -1) {
+        state.favorites.splice(idx, 1);
+      } else {
+        state.favorites.push({ id: itemId, addedAt: Date.now() });
+      }
+      saveFavorites();
+
+      document.querySelectorAll(`.fav-btn-${itemId}`).forEach(btn => {
+        const isFav = isFavorite(itemId);
+        btn.innerHTML = isFav ? '❤️' : '🤍';
+      });
+
+      const modalFav = document.getElementById('modalFavorites');
+      if (modalFav && modalFav.style.display !== 'none') {
+        renderFavoritesModal();
+      }
+    };
+
+    function loadFavorites() {
+      try {
+        const stored = localStorage.getItem('ismlar_favorites_v2');
+        if (stored) {
+          const raw = JSON.parse(stored);
+          const now = Date.now();
+          state.favorites = raw.filter(item => (now - item.addedAt) <= SEVEN_DAYS_MS);
+        } else {
+          state.favorites = [];
+        }
+      } catch (e) {
+        state.favorites = [];
+      }
+      updateFavoritesBadge();
+    }
+
+    function saveFavorites() {
+      try {
+        localStorage.setItem('ismlar_favorites_v2', JSON.stringify(state.favorites));
+      } catch (e) {}
+      updateFavoritesBadge();
+    }
+
+    function isFavorite(itemId) {
+      return state.favorites.some(f => f.id === itemId);
+    }
+
+    function updateFavoritesBadge() {
+      const badge = document.getElementById('favHeaderBadge');
+      if (badge) badge.textContent = state.favorites.length;
+    }
+
+    function getRemainingDays(addedAt) {
+      const elapsed = Date.now() - addedAt;
+      const remaining = SEVEN_DAYS_MS - elapsed;
+      const t = TRANSLATIONS[state.script];
+      if (remaining <= 0) return `0 ${t.daysLeft}`;
+      const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+      if (days >= 1) return `${days} ${t.daysLeft}`;
+      const hours = Math.floor(remaining / (60 * 60 * 1000));
+      return `${hours} ${t.hoursLeft}`;
+    }
+
+    function renderFavoritesModal() {
+      const list = document.getElementById('favNamesList');
+      const empty = document.getElementById('favEmptyState');
+      const t = TRANSLATIONS[state.script];
+
+      document.getElementById('favModalTitle').textContent = t.favTitle;
+      document.getElementById('favInfoBanner').innerHTML = t.favBannerText;
+      document.getElementById('favEmptyText').textContent = t.favEmpty;
+
+      if (!list) return;
+      list.innerHTML = '';
+      if (state.favorites.length === 0) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+
+      if (empty) empty.style.display = 'none';
+      state.favorites.forEach(fav => {
+        const item = (window.ALL_NAMES || []).find(x => x.id === fav.id);
+        if (item) {
+          list.appendChild(createNameAccordionElement(item, fav.addedAt));
+        }
+      });
+    }
+
+    function loadLocalViews() {
+      try {
+        const stored = localStorage.getItem('ismlar_views');
+        if (stored) state.userViews = JSON.parse(stored);
+      } catch (e) {}
+    }
+
+    function recordView(itemId) {
+      state.userViews[itemId] = (state.userViews[itemId] || 0) + 1;
+      try {
+        localStorage.setItem('ismlar_views', JSON.stringify(state.userViews));
+      } catch (e) {}
+
+      const item = (window.ALL_NAMES || []).find(x => x.id === itemId);
+      if (item) {
+        const badge = document.getElementById(`viewBadge_${itemId}`);
+        if (badge) badge.innerHTML = `👁️ ${(item.v + state.userViews[itemId]).toLocaleString()}`;
+      }
+      renderTop10();
+    }
+
+    function getTotalViews(item) {
+      return (item.v || 50) + (state.userViews[item.id] || 0);
+    }
+
+    function loadCustomEdits() {
+      try {
+        const stored = localStorage.getItem('ismlar_custom_edits');
+        if (stored && window.ALL_NAMES) {
+          const edits = JSON.parse(stored);
+          Object.keys(edits).forEach(id => {
+            const numId = parseInt(id, 10);
+            const idx = window.ALL_NAMES.findIndex(x => x.id === numId);
+            if (idx !== -1) {
+              window.ALL_NAMES[idx] = { ...window.ALL_NAMES[idx], ...edits[id] };
+            }
+          });
+        }
+      } catch (e) {}
+    }
+
+    function handleAdminLogin() {
+      const pass = document.getElementById('adminPasswordInput').value.trim();
+      if (pass === ADMIN_PASSWORD_DEFAULT) {
+        state.isAdmin = true;
+        document.getElementById('modalAdminLogin').style.display = 'none';
+        document.getElementById('modalAdminPanel').style.display = 'flex';
+        document.getElementById('adminLoginError').style.display = 'none';
+      } else {
+        document.getElementById('adminLoginError').style.display = 'block';
+      }
+    }
+
+    function handleAdminSearch(val) {
+      const q = val.trim().toLowerCase();
+      const resBox = document.getElementById('adminQuickResults');
+      if (!q) { resBox.style.display = 'none'; return; }
+
+      const matches = (window.ALL_NAMES || []).filter(item => 
+        (item.l || '').toLowerCase().includes(q) || 
+        (item.k || '').toLowerCase().includes(q)
+      ).slice(0, 10);
+
+      resBox.innerHTML = '';
+      matches.forEach(item => {
+        const row = document.createElement('div');
+        row.style.padding = '8px 12px';
+        row.style.cursor = 'pointer';
+        row.style.borderBottom = '1px solid #eee';
+        row.textContent = `${item.l} (${item.k})`;
+        row.addEventListener('click', () => {
+          document.getElementById('adminEditForm').style.display = 'block';
+          document.getElementById('editItemId').value = item.id;
+          document.getElementById('editingNameDisplay').textContent = `${item.l} (${item.k})`;
+          document.getElementById('editNameLotin').value = item.l;
+          document.getElementById('editNameKirill').value = item.k;
+          document.getElementById('editGender').value = item.g;
+          document.getElementById('editLang').value = item.lang;
+          document.getElementById('editMeaning').value = item.m;
+          document.getElementById('editViews').value = getTotalViews(item);
+          resBox.style.display = 'none';
+        });
+        resBox.appendChild(row);
+      });
+      resBox.style.display = 'block';
