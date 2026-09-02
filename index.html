@@ -745,3 +745,350 @@
         resBox.appendChild(row);
       });
       resBox.style.display = 'block';
+    }
+
+    function handleSaveNameEdit() {
+      const id = parseInt(document.getElementById('editItemId').value, 10);
+      const item = (window.ALL_NAMES || []).find(x => x.id === id);
+      if (!item) return;
+
+      item.l = document.getElementById('editNameLotin').value.trim();
+      item.k = document.getElementById('editNameKirill').value.trim();
+      item.g = document.getElementById('editGender').value;
+      item.lang = document.getElementById('editLang').value.trim();
+      item.m = document.getElementById('editMeaning').value.trim();
+      item.v = parseInt(document.getElementById('editViews').value, 10) || item.v;
+
+      try {
+        let edits = JSON.parse(localStorage.getItem('ismlar_custom_edits') || '{}');
+        edits[item.id] = item;
+        localStorage.setItem('ismlar_custom_edits', JSON.stringify(edits));
+      } catch (e) {}
+
+      const badge = document.getElementById('adminSaveStatus');
+      badge.style.display = 'inline-block';
+      setTimeout(() => { badge.style.display = 'none'; }, 2000);
+
+      if (state.activeLetter) selectLetter(state.activeLetter);
+      renderTop10();
+    }
+
+    function handleExportDb() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.ALL_NAMES || []));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "ismlar_yangilangan_baza.json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function createNameAccordionElement(item, addedAtTime = null) {
+      const t = TRANSLATIONS[state.script];
+      const isLotin = state.script === 'lotin';
+      const primaryName = isLotin ? item.l : item.k;
+      const altName = isLotin ? item.k : item.l;
+      const totalViews = getTotalViews(item);
+      const isFav = isFavorite(item.id);
+
+      const shareUrl = window.location.href.split('#')[0];
+      const shareText = `👶 ${primaryName} — ${item.m || ''}\n\nManba: Ismlar.uz`;
+      const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'name-accordion-item';
+      wrap.id = `accordion_${item.id}`;
+
+      const expireTag = addedAtTime ? `<span class="fav-expire-tag">⏳ ${getRemainingDays(addedAtTime)}</span>` : '';
+
+      wrap.innerHTML = `
+        <div class="accordion-header">
+          <div class="accordion-left">
+            <button type="button" class="btn-fav-toggle fav-btn-${item.id}">
+              ${isFav ? '❤️' : '🤍'}
+            </button>
+            <strong class="name-primary">${primaryName}</strong>
+            ${expireTag}
+          </div>
+          <div class="accordion-right">
+            <span class="view-badge" id="viewBadge_${item.id}">👁️ ${totalViews.toLocaleString()}</span>
+            <span>▼</span>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="card-meta-tags">
+            <span class="meta-chip"><b>${t.altScriptLabel}</b> ${altName}</span>
+            <span class="meta-chip"><b>${t.originLabel}</b> ${item.lang || "O'zbekcha"}</span>
+            <span class="meta-chip">${item.g === 'm' ? '👦 O\'g\'il' : '👧 Qiz'}</span>
+          </div>
+          <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>
+          <div class="card-share-block">
+            <div class="share-buttons-group">
+              <a href="${tgUrl}" target="_blank" class="share-action-btn tg">✈️ Telegram</a>
+              <a href="${waUrl}" target="_blank" class="share-action-btn wa">💬 WhatsApp</a>
+              <button type="button" class="share-action-btn copy btn-copy" data-text="${shareText}">📋 Nusxa olish</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      wrap.querySelector(`.fav-btn-${item.id}`).addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.toggleFavorite(item.id);
+      });
+
+      wrap.querySelector('.btn-copy').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const txt = e.currentTarget.getAttribute('data-text');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(txt).then(() => alert(t.copiedText));
+        } else {
+          prompt("Nusxalang:", txt);
+        }
+      });
+
+      wrap.querySelector('.accordion-header').addEventListener('click', () => {
+        const isOpen = wrap.classList.toggle('open');
+        if (isOpen) {
+          recordView(item.id);
+        }
+      });
+
+      return wrap;
+    }
+
+    function renderTop10() {
+      const grid = document.getElementById('top10Grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const isLotin = state.script === 'lotin';
+      const filtered = (window.ALL_NAMES || []).filter(item => item.g === state.gender);
+      filtered.sort((a, b) => getTotalViews(b) - getTotalViews(a));
+
+      filtered.slice(0, 10).forEach((item, index) => {
+        const primaryName = isLotin ? item.l : item.k;
+        const isFav = isFavorite(item.id);
+        const card = document.createElement('div');
+        card.className = `top10-card rank-${index + 1}`;
+        card.innerHTML = `
+          <div class="top10-row-top">
+            <span class="rank-badge">#${index + 1}</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn-fav-toggle fav-btn-${item.id}">${isFav ? '❤️' : '🤍'}</button>
+              <span class="view-badge">👁️ ${getTotalViews(item).toLocaleString()}</span>
+            </div>
+          </div>
+          <div class="top10-name-text">${primaryName}</div>
+          <div class="top10-meaning-preview">${item.m || ''}</div>
+        `;
+
+        card.querySelector(`.fav-btn-${item.id}`).addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.toggleFavorite(item.id);
+        });
+
+        card.addEventListener('click', () => {
+          state.activeLetter = primaryName.charAt(0).toUpperCase();
+          window.selectLetter(state.activeLetter);
+          setTimeout(() => {
+            const el = document.getElementById(`accordion_${item.id}`);
+            if (el) {
+              if (!el.classList.contains('open')) el.querySelector('.accordion-header').click();
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 150);
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderAlphabetBar() {
+      const bar = document.getElementById('alphabetBar');
+      if (!bar) return;
+      bar.innerHTML = '';
+      ALPHABETS[state.script].forEach(letter => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'letter-btn';
+        if (state.activeLetter === letter) btn.classList.add('active');
+        btn.textContent = letter;
+        btn.addEventListener('click', () => window.selectLetter(letter));
+        bar.appendChild(btn);
+      });
+    }
+
+    function renderLetterNamesSection(letter, names) {
+      const sec = document.getElementById('sectionLetterNames');
+      const t = TRANSLATIONS[state.script];
+      const bubble = document.getElementById('activeLetterBubble');
+      const title = document.getElementById('letterResultsTitle');
+      const count = document.getElementById('letterResultsCount');
+      const list = document.getElementById('letterNamesList');
+
+      if (bubble) bubble.textContent = letter;
+      if (title) title.textContent = `"${letter}" ${t.letterTitleSuffix}`;
+      if (count) count.textContent = `${names.length} ${t.itemsFound}`;
+
+      if (!list) return;
+      list.innerHTML = '';
+      if (names.length === 0) {
+        list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">${t.noNamesFound}</div>`;
+      } else {
+        names.forEach(item => list.appendChild(createNameAccordionElement(item)));
+      }
+
+      if (sec) {
+        sec.style.display = 'block';
+        sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function handleSearchInput(query) {
+      state.searchQuery = query.trim().toLowerCase();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      const searchSec = document.getElementById('sectionSearchResults');
+      const letterSec = document.getElementById('sectionLetterNames');
+      const top10Sec = document.getElementById('sectionTop10');
+      const alphaSec = document.getElementById('sectionAlphabet');
+
+      if (!state.searchQuery) {
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (searchSec) searchSec.style.display = 'none';
+        if (top10Sec) top10Sec.style.display = 'block';
+        if (alphaSec) alphaSec.style.display = 'block';
+        if (state.activeLetter && letterSec) letterSec.style.display = 'block';
+        return;
+      }
+
+      if (clearBtn) clearBtn.style.display = 'flex';
+      if (searchSec) searchSec.style.display = 'block';
+      if (letterSec) letterSec.style.display = 'none';
+
+      const matches = (window.ALL_NAMES || []).filter(item => {
+        if (item.g !== state.gender) return false;
+        return (item.l || '').toLowerCase().includes(state.searchQuery) ||
+               (item.k || '').toLowerCase().includes(state.searchQuery) ||
+               (item.m || '').toLowerCase().includes(state.searchQuery);
+      });
+
+      const badge = document.getElementById('searchCountBadge');
+      if (badge) badge.textContent = `${matches.length} ta ism`;
+      const list = document.getElementById('searchResultsList');
+      if (!list) return;
+      list.innerHTML = '';
+      matches.slice(0, 50).forEach(item => list.appendChild(createNameAccordionElement(item)));
+    }
+
+    function showStep(step) {
+      const welcome = document.getElementById('stepWelcome');
+      const gender = document.getElementById('stepGender');
+      const catalog = document.getElementById('catalogArea');
+
+      if (welcome) welcome.style.display = (step === 'welcome') ? 'block' : 'none';
+      if (gender) gender.style.display = (step === 'gender') ? 'block' : 'none';
+      if (catalog) catalog.style.display = (step === 'catalog') ? 'block' : 'none';
+
+      if (step === 'catalog') {
+        renderAlphabetBar();
+        renderTop10();
+      }
+    }
+
+    function updateLocalization() {
+      const t = TRANSLATIONS[state.script];
+      document.title = t.siteTitle;
+      const wTitle = document.getElementById('welcomeTitle');
+      if (wTitle) wTitle.textContent = t.welcomeTitle;
+      const wSub = document.getElementById('welcomeSubtitle');
+      if (wSub) wSub.textContent = t.welcomeSub;
+      const pText = document.getElementById('chooseAlphabetPrompt');
+      if (pText) pText.textContent = t.chooseAlifbo;
+      const gTitle = document.getElementById('genderTitle');
+      if (gTitle) gTitle.textContent = t.genderTitle;
+      const lBoy = document.getElementById('lblBoy');
+      if (lBoy) lBoy.textContent = t.lblBoy;
+      const lGirl = document.getElementById('lblGirl');
+      if (lGirl) lGirl.textContent = t.lblGirl;
+      const fLbl = document.getElementById('favLabelText');
+      if (fLbl) fLbl.textContent = t.favHeaderBtn;
+      const t10Title = document.getElementById('top10HeadingText');
+      if (t10Title) t10Title.textContent = t.top10Title;
+      const t10Badge = document.getElementById('top10GenderBadge');
+      if (t10Badge) t10Badge.textContent = state.gender === 'm' ? t.top10BoyBadge : t.top10GirlBadge;
+      const sInput = document.getElementById('searchInput');
+      if (sInput) sInput.placeholder = t.searchPlaceholder;
+
+      document.body.classList.toggle('gender-m', state.gender === 'm');
+      document.body.classList.toggle('gender-f', state.gender === 'f');
+    }
+
+    function bindEvents() {
+      const closeLetterBtn = document.getElementById('closeLetterResultsBtn');
+      if (closeLetterBtn) {
+        closeLetterBtn.addEventListener('click', () => {
+          state.activeLetter = null;
+          const sec = document.getElementById('sectionLetterNames');
+          if (sec) sec.style.display = 'none';
+          renderAlphabetBar();
+        });
+      }
+
+      const sIn = document.getElementById('searchInput');
+      if (sIn) {
+        sIn.addEventListener('input', (e) => handleSearchInput(e.target.value));
+      }
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn && sIn) {
+        clearBtn.addEventListener('click', () => {
+          sIn.value = ''; handleSearchInput('');
+        });
+      }
+
+      const logo = document.getElementById('logoLink');
+      if (logo) {
+        logo.addEventListener('click', (e) => {
+          e.preventDefault();
+          showStep('welcome');
+        });
+      }
+
+      const adminSearch = document.getElementById('adminNameSearch');
+      if (adminSearch) {
+        adminSearch.addEventListener('input', (e) => handleAdminSearch(e.target.value));
+      }
+      const btnSave = document.getElementById('btnSaveNameEdit');
+      if (btnSave) btnSave.addEventListener('click', handleSaveNameEdit);
+      const btnExp = document.getElementById('btnExportDb');
+      if (btnExp) btnExp.addEventListener('click', handleExportDb);
+      const btnAdmSub = document.getElementById('btnSubmitAdminLogin');
+      if (btnAdmSub) btnAdmSub.addEventListener('click', handleAdminLogin);
+      const admPass = document.getElementById('adminPasswordInput');
+      if (admPass) {
+        admPass.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') handleAdminLogin();
+        });
+      }
+    }
+
+    function init() {
+      loadLocalViews();
+      loadCustomEdits();
+      loadFavorites();
+      updateLocalization();
+      bindEvents();
+      showStep('welcome');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+  })();
+  </script>
+</body>
+</html>
