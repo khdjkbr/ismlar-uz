@@ -1,1 +1,354 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Ismlar.uz — O'zbek ismlari ma'nosi to'liq katalogi</title>
+  
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+  <!-- Шрифты Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-neutral">
+
+  <!-- Деликатный младенческий фоновый узор -->
+  <div class="baby-bg-pattern" aria-hidden="true"></div>
+
+  <!-- Закрепленная верхняя плашка с поиском и переключателями -->
+  <header class="sticky-header" id="stickyHeader">
+    <div class="header-container">
+      <div class="brand-row">
+        <a href="#" class="brand-logo" id="logoLink">
+          <span class="logo-icon">🍼</span>
+          <span class="logo-text">Ismlar<span class="logo-tld">.uz</span></span>
+        </a>
+        <div class="header-switches">
+          <!-- Кнопка Избранное (хранится 7 дней) -->
+          <button type="button" class="header-fav-btn" id="btnOpenFavorites" title="Sevimlilar (7 kun saqlanadi)">
+            <span class="fav-icon">❤️</span>
+            <span class="fav-label" id="favLabelText">Sevimlilar</span>
+            <span class="fav-counter-badge" id="favHeaderBadge">0</span>
+          </button>
+
+          <!-- Переключатель алфавита -->
+          <div class="switch-pill script-switch">
+            <button type="button" class="pill-btn active" data-script="lotin">Lotin</button>
+            <button type="button" class="pill-btn" data-script="kirill">Кирилл</button>
+          </div>
+          <!-- Переключатель пола -->
+          <div class="switch-pill gender-switch">
+            <button type="button" class="pill-btn active" data-gender="m">👦 <span class="gender-label">O'g'il</span></button>
+            <button type="button" class="pill-btn" data-gender="f">👧 <span class="gender-label">Qiz</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Постоянно видимая строка поиска -->
+      <div class="search-bar-wrap">
+        <div class="search-input-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Ism bo'yicha tezkor qidiruv..." autocomplete="off">
+          <button type="button" id="clearSearchBtn" class="clear-btn" style="display: none;">✕</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Верхний рекламный баннер -->
+  <div class="ad-banner-wrap container">
+    <div class="ad-placeholder banner-top">
+      <span class="ad-tag">Reklama / Реклама</span>
+      <div class="ad-content">
+        <p>📱 Banner Reklama joyi (728x90 / 320x100)</p>
+      </div>
+    </div>
+  </div>
+
+  <main class="main-content container">
+
+    <!-- Шаг 1: Приветствие и выбор алфавита -->
+    <section class="wizard-step step-welcome" id="stepWelcome">
+      <div class="welcome-card">
+        <div class="baby-illustration">👶✨</div>
+        <h1 class="welcome-title" id="welcomeTitle">Farzandingiz uchun eng chiroyli va ma'noli ismni tanlang</h1>
+        <p class="welcome-desc" id="welcomeSubtitle">
+          12 000+ dan ortiq o'zbek xalq ismlarining to'liq ma'nosi, kelib chiqishi va izohi.
+        </p>
+        <p class="prompt-text" id="chooseAlphabetPrompt">Dastlab o'zingizga qulay alifboni tanlang:</p>
+        
+        <div class="alphabet-choice-btns">
+          <button type="button" class="choice-card-btn" id="btnChooseLotin">
+            <span class="choice-icon">🅰️</span>
+            <div class="choice-text-wrap">
+              <strong class="choice-name">Ismlar lotin alifbosida</strong>
+              <small class="choice-sub">O'zbek lotin alifbosi</small>
+            </div>
+            <span class="choice-arrow">➔</span>
+          </button>
+
+          <button type="button" class="choice-card-btn" id="btnChooseKirill">
+            <span class="choice-icon">🔤</span>
+            <div class="choice-text-wrap">
+              <strong class="choice-name">Исмлар кирилл алифбосида</strong>
+              <small class="choice-sub">Ўзбек кирилл алифбоси</small>
+            </div>
+            <span class="choice-arrow">➔</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Шаг 2: Выбор пола ребенка -->
+    <section class="wizard-step step-gender" id="stepGender" style="display: none;">
+      <div class="step-card">
+        <div class="step-badge" id="stepBadgeGender">2-bosqich</div>
+        <h2 class="step-title" id="genderTitle">Farzandingiz jinsini tanlang</h2>
+        <p class="step-desc" id="genderDesc">Tanlovingizga ko'ra mos ismlar saralab beriladi</p>
+
+        <div class="gender-choice-grid">
+          <button type="button" class="gender-card-btn boy" id="btnSelectBoy">
+            <span class="gender-avatar">👦</span>
+            <span class="gender-title" id="lblBoy">O'g'il bola</span>
+            <span class="gender-sub" id="lblBoySub">Jasur, mard, baxtli</span>
+          </button>
+          
+          <button type="button" class="gender-card-btn girl" id="btnSelectGirl">
+            <span class="gender-avatar">👧</span>
+            <span class="gender-title" id="lblGirl">Qiz bola</span>
+            <span class="gender-sub" id="lblGirlSub">Go'zal, latofatli, oqila</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Каталог (после выбора алфавита и пола) -->
+    <div id="catalogArea" style="display: none;">
+
+      <!-- Алфавитная панель -->
+      <section class="section-alphabet" id="sectionAlphabet">
+        <div class="section-header-row">
+          <h2 class="section-heading" id="alphabetHeading">
+            <span class="icon">🔤</span> <span id="alphabetHeadingText">Harf bo'yicha ismlar</span>
+          </h2>
+          <span class="heading-sub" id="alphabetHintText">Bosh harfni tanlang:</span>
+        </div>
+        <div class="alphabet-bar" id="alphabetBar"></div>
+      </section>
+
+      <!-- Вывод имён по выбранной букве (над блоком Топ-10) -->
+      <section class="section-letter-names" id="sectionLetterNames" style="display: none;">
+        <div class="letter-results-header">
+          <div class="letter-title-badge">
+            <span class="active-letter-bubble" id="activeLetterBubble">A</span>
+            <div class="letter-text-box">
+              <h3 class="letter-res-title" id="letterResultsTitle">Ismlar ro'yxati</h3>
+              <p class="letter-res-count" id="letterResultsCount">0 ta ism topildi</p>
+            </div>
+          </div>
+          <button type="button" class="close-letter-btn" id="closeLetterResultsBtn" title="Yopish">✕</button>
+        </div>
+
+        <div class="names-accordion-list" id="letterNamesList"></div>
+      </section>
+
+      <!-- Средний рекламный баннер -->
+      <div class="ad-banner-wrap">
+        <div class="ad-placeholder banner-middle">
+          <span class="ad-tag">Reklama / Реклама</span>
+          <div class="ad-content">
+            <p>🎁 Reklama joyi (300x250 / 728x90)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Топ 10 часто просматриваемых имён (ПК = 2 колонки, Мобильный = 1 колонка) -->
+      <section class="section-top10" id="sectionTop10">
+        <div class="section-header-row top10-header">
+          <div class="top10-title-wrap">
+            <h2 class="section-heading" id="top10Heading">
+              <span class="icon">⭐</span> <span id="top10HeadingText">Eng ko'p ko'rilgan 10 ta ism</span>
+            </h2>
+            <span class="top10-badge" id="top10GenderBadge">O'g'il bolalar uchun</span>
+          </div>
+          <div class="live-counter-note">
+            <span class="pulse-dot"></span>
+            <span id="liveCounterText">Haqiqiy foydalanuvchilar ko'rishlari asosida</span>
+          </div>
+        </div>
+
+        <div class="top10-grid" id="top10Grid"></div>
+      </section>
+
+      <!-- Результаты быстрого поиска -->
+      <section class="section-search-results" id="sectionSearchResults" style="display: none;">
+        <div class="section-header-row">
+          <h2 class="section-heading">
+            <span class="icon">🔎</span> <span id="searchResText">Qidiruv natijalari</span>
+          </h2>
+          <span class="heading-sub" id="searchCountBadge">0 ta ism</span>
+        </div>
+        <div class="names-accordion-list" id="searchResultsList"></div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Нижний рекламный баннер -->
+  <div class="ad-banner-wrap container">
+    <div class="ad-placeholder banner-bottom">
+      <span class="ad-tag">Reklama / Реклама</span>
+      <div class="ad-content">
+        <p>📢 Hamkorlik va reklama uchun: ismlar.uz</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Подвал сайта -->
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <span class="logo-icon">🍼</span>
+        <strong>Ismlar.uz</strong>
+      </div>
+      <p class="footer-desc" id="footerBookRef">
+        Manba: E. A. Begmatovning «O'zbek ismlari ma'nosi» fundamental kitobi asosida.
+      </p>
+      <div class="footer-bottom-row">
+        <span>© 2026 Ismlar.uz — Barcha huquqlar himoyalangan.</span>
+        <div class="footer-action-links">
+          <span class="tma-status" id="tmaStatusBadge">🌐 Web versiya</span>
+          <button type="button" class="admin-link-btn" id="btnOpenAdminLogin">⚙️ Admin</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Модальное окно: Избранное (Хранение 7 дней без регистрации) -->
+  <div class="modal-overlay" id="modalFavorites" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="modal-icon">❤️</span>
+          <h3 id="favModalTitle">Sevimlilar ro'yxati</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseFavModal">✕</button>
+      </div>
+      <div class="fav-info-banner" id="favInfoBanner">
+        <span>⏳ Ismlar ushbu qurilmada ro'yxatdan o'tmasdan <b>7 kun</b> saqlanadi.</span>
+      </div>
+      <div class="modal-body-scroll">
+        <div class="names-accordion-list" id="favNamesList"></div>
+        <div class="empty-state" id="favEmptyState" style="display: none;">
+          <div class="empty-icon">🤍</div>
+          <p id="favEmptyText">Hozircha sevimli ismlar yo'q. Istalgan ism yonidagi yurakcha (🤍) tugmasini bosing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Авторизация администратора -->
+  <div class="modal-overlay" id="modalAdminLogin" style="display: none;">
+    <div class="modal-window modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="modal-icon">🔒</span>
+          <h3>Admin panelga kirish</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseAdminLogin">✕</button>
+      </div>
+      <div class="modal-body-pad">
+        <p class="modal-subtext">Ismlarni tahrirlash uchun maxfiy administrator parolini kiriting:</p>
+        <div class="form-group">
+          <input type="password" id="adminPasswordInput" class="custom-input" placeholder="Admin paroli...">
+          <span class="error-msg" id="adminLoginError" style="display: none;">Parol noto'g'ri!</span>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-primary" id="btnSubmitAdminLogin">Kirish</button>
+        </div>
+        <small class="admin-hint-text">Standart parol: <code>admin2026</code></small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Админ-панель редактирования имён -->
+  <div class="modal-overlay" id="modalAdminPanel" style="display: none;">
+    <div class="modal-window modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <span class="modal-icon">⚙️</span>
+          <h3>Ismlar boshqaruvi (Admin Panel)</h3>
+        </div>
+        <div class="header-admin-tools">
+          <button type="button" class="btn-sm btn-outline" id="btnExportDb">💾 Eksport JSON</button>
+          <button type="button" class="modal-close-btn" id="btnCloseAdminPanel">✕</button>
+        </div>
+      </div>
+      <div class="modal-body-scroll admin-body">
+        <div class="admin-search-box">
+          <label for="adminNameSearch">Tahrir qilish uchun ismni qidiring:</label>
+          <div class="search-input-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="adminNameSearch" placeholder="Ism yozing (masalan: Alisher, Madina)...">
+          </div>
+          <div class="admin-quick-results" id="adminQuickResults"></div>
+        </div>
+
+        <div class="admin-edit-form" id="adminEditForm" style="display: none;">
+          <h4 class="form-section-title">Ism ma'lumotlarini tahrirlash: <span id="editingNameDisplay"></span></h4>
+          <input type="hidden" id="editItemId">
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="editNameLotin">Ism (Lotincha):</label>
+              <input type="text" id="editNameLotin" class="custom-input">
+            </div>
+            <div class="form-group">
+              <label for="editNameKirill">Исм (Кириллча):</label>
+              <input type="text" id="editNameKirill" class="custom-input">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="editGender">Jinsi:</label>
+              <select id="editGender" class="custom-select">
+                <option value="m">O'g'il bola (Эркаклар исми)</option>
+                <option value="f">Qiz bola (Аёллар исми)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editLang">Tili (Этимологияси):</label>
+              <input type="text" id="editLang" class="custom-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editMeaning">To'liq ma'nosi va izohi:</label>
+            <textarea id="editMeaning" class="custom-textarea" rows="4"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="editViews">Ko'rishlar soni (Reyting uchun):</label>
+            <input type="number" id="editViews" class="custom-input" min="0">
+          </div>
+
+          <div class="admin-form-actions">
+            <button type="button" class="btn-primary" id="btnSaveNameEdit">✅ O'zgarishlarni saqlash</button>
+            <span class="save-status-badge" id="adminSaveStatus" style="display: none;">Saqlandi!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="names_data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
