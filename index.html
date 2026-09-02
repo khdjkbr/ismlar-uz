@@ -1022,4 +1022,854 @@
         <div id="adminTabAddSection" style="display: none; background: #FAF7F2; border: 1px solid var(--border-light); border-radius: 12px; padding: 20px;">
           <h4 style="font-family: var(--font-heading); margin-bottom: 14px; color: var(--text-main);">Yangi ism qo'shish:</h4>
           
-          <div class
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="newNameLotin">Ism: *</label>
+              <input type="text" id="newNameLotin" class="custom-input" placeholder="Masalan: Behruz, Madina...">
+            </div>
+            <div class="form-group">
+              <label for="newGender">Jinsi: *</label>
+              <select id="newGender" class="custom-select">
+                <option value="m">O'g'il bola</option>
+                <option value="f">Qiz bola</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="newLang">Kelib chiqishi: *</label>
+            <input type="text" id="newLang" class="custom-input" placeholder="Masalan: O'zbekcha, Arabcha, Forscha...">
+          </div>
+
+          <div class="form-group">
+            <label for="newMeaning">To'liq ma'nosi va izohi: *</label>
+            <textarea id="newMeaning" class="custom-textarea" rows="4" placeholder="Ismning ma'nosi va to'liq izohi..."></textarea>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin-top:14px;">
+            <button type="button" class="btn-primary" onclick="window.handleAddNewName()">➕ Ismni bazaga qo'shish</button>
+            <span class="save-status-badge" id="adminAddStatus" style="display: none;">Yangi ism qo'shildi!</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="names_data.js"></script>
+
+  <!-- ЛОГИКА САЙТА И АДМИНКИ -->
+  <script>
+  (function () {
+    'use strict';
+
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const ADMIN_USER_DEFAULT = "admin";
+    const ADMIN_PASS_DEFAULT = "Admin#2026";
+
+    // Базовые имена (только на латинице)
+    const FALLBACK_NAMES = [
+      {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va e'zoz sohibining, ya'ni Allohning quli.", v:1420},
+      {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Payg'ambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
+      {id:3, l:"Alisher", g:"m", lang:"Arabcha / Fors-tojikcha", m:"Sherdek jasur, dovyurak bo'lib o'ssin va hazrati Ali qo'llab yursin.", v:1280},
+      {id:4, l:"Amirxon", g:"m", lang:"Arabcha / O'zbekcha", m:"Hokim, yo'lboshchi; yuksak martabali, e'zozli o'g'il.", v:980},
+      {id:5, l:"Behro'z", g:"m", lang:"Fors-tojikcha", m:"Baxtli, saodatli kunda tug'ilgan bola.", v:1120},
+      {id:6, l:"Javohir", g:"m", lang:"Arabcha", m:"Qimmatbaho toshlar, javohirlar; bebaho, qimmatli farzand.", v:1150},
+      {id:7, l:"Sardor", g:"m", lang:"Fors-tojikcha", m:"Yetakchi, boshliq, rahbar; lashkarboshi, yo'lboshchi.", v:940},
+      {id:8, l:"Sherzod", g:"m", lang:"Fors-tojikcha", m:"Sher bolasi, dovyurak, jasurlar avlodiga mansub o'g'il.", v:870},
+      {id:9, l:"Temur", g:"m", lang:"O'zbekcha", m:"Temirdek mustahkam, mahkam, chidamli, umri uzoq bola.", v:1050},
+      {id:10, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr ko'ruvchi, obodlik ramzi.", v:1390},
+      {id:11, l:"Bilol", g:"m", lang:"Arabcha", m:"Yangi tuqqan oy (hilol) yoki chanqoqbosdi suvdek aziz bola.", v:920},
+      {id:12, l:"Davron", g:"m", lang:"Arabcha", m:"Davr sursin, umri shodon, baxtiyor o'tsin, tolei porloq bo'lsin.", v:780},
+      {id:13, l:"Yusuf", g:"m", lang:"Qadimiy yahudiycha / Arabcha", m:"Husnda tengsiz, go'zallik ramzi bo'lgan bola.", v:1360},
+      {id:14, l:"Ulug'bek", g:"m", lang:"O'zbekcha", m:"Buyuk hukmdor, buyuk sulton, beklarning eng ulug'i.", v:1120},
+      {id:15, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr ko'ruvchi, tabarruk va adolatli inson.", v:1250},
+      {id:16, l:"Rustam", g:"m", lang:"Fors-tojikcha", m:"Ulkan gavdali, kuchli, dovyurak bahodir, pahlavon.", v:960},
+      {id:17, l:"Sanjar", g:"m", lang:"Arabcha", m:"Shiddatli, o'tkir, kuchli, g'olib va muzaffar yigit.", v:820},
+      {id:18, l:"Oybek", g:"m", lang:"O'zbekcha", m:"Beklar avlodiga mansub, oydek ko'rkam va baxtli bola.", v:880},
+      {id:19, l:"Otabek", g:"m", lang:"O'zbekcha", m:"Shahzoda, xonzoda; beklar boshlig'i, elning sardori.", v:850},
+      {id:20, l:"Jasur", g:"m", lang:"Arabcha", m:"Qaytmas, mard, jur'atli, jasoratli va dovyurak bola.", v:910},
+      {id:21, l:"Madina", g:"f", lang:"Arabcha", m:"Muqaddas ziyoratgoh Madina shahri nomidan olingan go'zal qiz.", v:1790},
+      {id:22, l:"Zuhro", g:"f", lang:"Arabcha", m:"Cho'lpon yulduzidek porloq, ravshan va go'zal qiz.", v:1350},
+      {id:23, l:"Yasmina", g:"f", lang:"Arabcha / Fors-tojikcha", m:"Xushbo'y yosumin (jasmin) gulidek nafis, latofatli qiz.", v:1640},
+      {id:24, l:"Fotima", g:"f", lang:"Arabcha", m:"Payg'ambarimiz (s.a.v.)ning suyukli qizlarining muborak ismlari.", v:1510},
+      {id:25, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushbo'y va dilkash qiz.", v:1470},
+      {id:26, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojo'y, iymonli va odobli qiz.", v:1310},
+      {id:27, l:"Samira", g:"f", lang:"Arabcha", m:"Suhbatdosh, dilkash, yoqimtoy va shirinso'z qiz.", v:1260},
+      {id:28, l:"Shahzoda", g:"f", lang:"Fors-tojikcha", m:"Shohlar avlodiga mansub, aslzoda, malikadek hurmatli qiz.", v:1040},
+      {id:29, l:"Oysha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli va pokdomon ayol.", v:1420},
+      {id:30, l:"Gulnora", g:"f", lang:"Fors-tojikcha", m:"Anor gulidek chiroyli, chehrasi qirmizi, go'zal qiz.", v:980},
+      {id:31, l:"Dildora", g:"f", lang:"Fors-tojikcha", m:"Dildan sevilgan, chin muhabbat sohibasi, suyukli qiz.", v:950},
+      {id:32, l:"Lola", g:"f", lang:"Fors-tojikcha", m:"Loladek yashnagan, go'zal va bahoriy tarovatli qiz.", v:890},
+      {id:33, l:"Barno", g:"f", lang:"Fors-tojikcha", m:"Yosh, navjuvon; xushbichim, kelishgan sohibjamol.", v:840},
+      {id:34, l:"Zilola", g:"f", lang:"Arabcha", m:"Tiniq buloq suvidek pokiza, toza va beg'ubor qiz.", v:860},
+      {id:35, l:"Shahnoza", g:"f", lang:"Fors-tojikcha", m:"Shohona nozli, nazokatli, latofatli va oliyjanob qiz.", v:910},
+      {id:36, l:"Sevinch", g:"f", lang:"O'zbekcha", m:"Shodlik, baxtiyorlik, oilaning sevinchi bo'lgan qiz.", v:1130},
+      {id:37, l:"Yulduz", g:"f", lang:"O'zbekcha", m:"Tolei yulduzdek yuksak va porloq bo'lsin, saodatli bo'lsin.", v:930},
+      {id:38, l:"Ozoda", g:"f", lang:"Fors-tojikcha", m:"Erkin, hur; toza, pokiza, saranjom va begunoh qiz.", v:920},
+      {id:39, l:"Sarvinoz", g:"f", lang:"Fors-tojikcha", m:"Sarv daraxtidek xushqomat, tik qaddi-qomatli va nozik qiz.", v:910},
+      {id:40, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi; Payg'ambarimizning ilk zavjalari muborak ismlari.", v:1180}
+    ];
+
+    if (!window.ALL_NAMES || !Array.isArray(window.ALL_NAMES) || window.ALL_NAMES.length === 0) {
+      window.ALL_NAMES = FALLBACK_NAMES;
+    }
+
+    const LATIN_ALPHABET = [
+      'A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
+      'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 
+      'V', 'X', 'Y', 'Z', 'Oʻ', 'Gʻ', 'Sh', 'Ch'
+    ];
+
+    const state = {
+      gender: 'm',
+      activeLetter: null,
+      searchQuery: '',
+      openedIds: new Set(),
+      userViews: {},
+      favorites: [],
+      isAdmin: false
+    };
+
+    window.startChoosing = function () {
+      showStep('gender');
+    };
+
+    window.selectGender = function (gender) {
+      state.gender = gender;
+      state.activeLetter = null;
+      document.body.classList.toggle('gender-m', gender === 'm');
+      document.body.classList.toggle('gender-f', gender === 'f');
+      const badge = document.getElementById('top10GenderBadge');
+      if (badge) {
+        badge.textContent = gender === 'm' ? "O'g'il bolalar uchun" : "Qiz bolalar uchun";
+        badge.style.background = gender === 'm' ? "var(--boy-bg)" : "var(--girl-bg)";
+        badge.style.color = gender === 'm' ? "var(--boy-color)" : "var(--girl-color)";
+      }
+      showStep('catalog');
+    };
+
+    window.selectLetter = function (letter) {
+      if (state.activeLetter === letter) {
+        state.activeLetter = null;
+        const sec = document.getElementById('sectionLetterNames');
+        if (sec) sec.style.display = 'none';
+        renderAlphabetBar();
+        return;
+      }
+
+      state.activeLetter = letter;
+      renderAlphabetBar();
+
+      const names = (window.ALL_NAMES || []).filter(item => {
+        if (item.g !== state.gender) return false;
+        const name = item.l || '';
+        if (!name) return false;
+
+        if (letter === 'Oʻ' || letter === "O'") return name.startsWith("Oʻ") || name.startsWith("O'") || name.startsWith("O‘");
+        if (letter === 'Gʻ' || letter === "G'") return name.startsWith("Gʻ") || name.startsWith("G'") || name.startsWith("G‘");
+        if (letter === 'Sh') return name.startsWith("Sh") || name.startsWith("sh");
+        if (letter === 'Ch') return name.startsWith("Ch") || name.startsWith("ch");
+        if (letter === 'O') return name.startsWith('O') && !name.startsWith("Oʻ") && !name.startsWith("O'");
+        if (letter === 'G') return name.startsWith('G') && !name.startsWith("Gʻ") && !name.startsWith("G'");
+        if (letter === 'S') return name.startsWith('S') && !name.startsWith("Sh");
+        if (letter === 'C') return name.startsWith('C') && !name.startsWith("Ch");
+
+        return name.toUpperCase().startsWith(letter.toUpperCase());
+      });
+
+      renderLetterNamesSection(letter, names);
+    };
+
+    window.openFavoritesModal = function () {
+      renderFavoritesModal();
+      const m = document.getElementById('modalFavorites');
+      if (m) m.style.display = 'flex';
+    };
+
+    window.closeFavoritesModal = function () {
+      const m = document.getElementById('modalFavorites');
+      if (m) m.style.display = 'none';
+    };
+
+    window.openAdminModal = function () {
+      if (state.isAdmin) {
+        document.getElementById('modalAdminPanel').style.display = 'flex';
+      } else {
+        document.getElementById('modalAdminLogin').style.display = 'flex';
+      }
+    };
+
+    window.closeAdminLoginModal = function () {
+      document.getElementById('modalAdminLogin').style.display = 'none';
+      const err = document.getElementById('adminLoginError');
+      if (err) err.style.display = 'none';
+    };
+
+    window.closeAdminPanelModal = function () {
+      document.getElementById('modalAdminPanel').style.display = 'none';
+    };
+
+    window.handleAdminLogin = function () {
+      const user = (document.getElementById('adminUsernameInput').value || '').trim();
+      const pass = (document.getElementById('adminPasswordInput').value || '').trim();
+      const err = document.getElementById('adminLoginError');
+
+      if (user === ADMIN_USER_DEFAULT && pass === ADMIN_PASS_DEFAULT) {
+        state.isAdmin = true;
+        if (err) err.style.display = 'none';
+        document.getElementById('modalAdminLogin').style.display = 'none';
+        document.getElementById('modalAdminPanel').style.display = 'flex';
+      } else {
+        if (err) err.style.display = 'block';
+      }
+    };
+
+    // Переключение вкладок в админке
+    window.switchAdminTab = function (tab) {
+      const editSec = document.getElementById('adminTabEditSection');
+      const addSec = document.getElementById('adminTabAddSection');
+      const btnEdit = document.getElementById('tabBtnEdit');
+      const btnAdd = document.getElementById('tabBtnAdd');
+
+      if (tab === 'add') {
+        if (editSec) editSec.style.display = 'none';
+        if (addSec) addSec.style.display = 'block';
+        if (btnEdit) btnEdit.classList.remove('active');
+        if (btnAdd) btnAdd.classList.add('active');
+      } else {
+        if (editSec) editSec.style.display = 'block';
+        if (addSec) addSec.style.display = 'none';
+        if (btnEdit) btnEdit.classList.add('active');
+        if (btnAdd) btnAdd.classList.remove('active');
+      }
+    };
+
+    // Добавление нового имени
+    window.handleAddNewName = function () {
+      const nameInput = document.getElementById('newNameLotin');
+      const langInput = document.getElementById('newLang');
+      const genderInput = document.getElementById('newGender');
+      const meaningInput = document.getElementById('newMeaning');
+      const statusBadge = document.getElementById('adminAddStatus');
+
+      const name = (nameInput ? nameInput.value : '').trim();
+      const lang = (langInput ? langInput.value : '').trim() || "O'zbekcha";
+      const gender = genderInput ? genderInput.value : 'm';
+      const meaning = (meaningInput ? meaningInput.value : '').trim();
+
+      if (!name) {
+        alert("Iltimos, ismni kiriting!");
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!meaning) {
+        alert("Iltimos, ism ma'nosini kiriting!");
+        if (meaningInput) meaningInput.focus();
+        return;
+      }
+
+      const newId = Date.now();
+      const newItem = {
+        id: newId,
+        l: name,
+        g: gender,
+        lang: lang,
+        m: meaning,
+        v: 60
+      };
+
+      if (!window.ALL_NAMES) window.ALL_NAMES = [];
+      window.ALL_NAMES.unshift(newItem);
+
+      try {
+        let addedList = JSON.parse(localStorage.getItem('ismlar_added_names') || '[]');
+        addedList.unshift(newItem);
+        localStorage.setItem('ismlar_added_names', JSON.stringify(addedList));
+      } catch (e) {}
+
+      if (nameInput) nameInput.value = '';
+      if (langInput) langInput.value = '';
+      if (meaningInput) meaningInput.value = '';
+
+      if (statusBadge) {
+        statusBadge.style.display = 'inline-block';
+        setTimeout(() => { statusBadge.style.display = 'none'; }, 2200);
+      }
+
+      if (state.activeLetter) window.selectLetter(state.activeLetter);
+      renderTop10();
+    };
+
+    // Удаление имени
+    window.handleDeleteName = function () {
+      const idInput = document.getElementById('editItemId');
+      const id = idInput ? parseInt(idInput.value, 10) : null;
+      if (!id) return;
+
+      const item = (window.ALL_NAMES || []).find(x => x.id === id);
+      const name = item ? item.l : 'Ushbu ism';
+
+      if (!confirm(`Rostdan ham "${name}" ismini o'chirmoqchimisiz?`)) {
+        return;
+      }
+
+      const idx = (window.ALL_NAMES || []).findIndex(x => x.id === id);
+      if (idx !== -1) {
+        window.ALL_NAMES.splice(idx, 1);
+      }
+
+      try {
+        let deletedList = JSON.parse(localStorage.getItem('ismlar_deleted_ids') || '[]');
+        if (!deletedList.includes(id)) {
+          deletedList.push(id);
+          localStorage.setItem('ismlar_deleted_ids', JSON.stringify(deletedList));
+        }
+        let addedList = JSON.parse(localStorage.getItem('ismlar_added_names') || '[]');
+        addedList = addedList.filter(x => x.id !== id);
+        localStorage.setItem('ismlar_added_names', JSON.stringify(addedList));
+      } catch (e) {}
+
+      const form = document.getElementById('adminEditForm');
+      if (form) form.style.display = 'none';
+
+      alert(`"${name}" muvaffaqiyatli o'chirildi.`);
+
+      if (state.activeLetter) window.selectLetter(state.activeLetter);
+      renderTop10();
+    };
+
+    window.toggleFavorite = function (itemId) {
+      const idx = state.favorites.findIndex(f => f.id === itemId);
+      if (idx !== -1) {
+        state.favorites.splice(idx, 1);
+      } else {
+        state.favorites.push({ id: itemId, addedAt: Date.now() });
+      }
+      saveFavorites();
+
+      document.querySelectorAll(`.fav-btn-${itemId}`).forEach(btn => {
+        const isFav = isFavorite(itemId);
+        btn.innerHTML = isFav ? '❤️' : '🤍';
+      });
+
+      const modalFav = document.getElementById('modalFavorites');
+      if (modalFav && modalFav.style.display !== 'none') {
+        renderFavoritesModal();
+      }
+    };
+
+    function loadFavorites() {
+      try {
+        const stored = localStorage.getItem('ismlar_favorites_v2');
+        if (stored) {
+          const raw = JSON.parse(stored);
+          const now = Date.now();
+          state.favorites = raw.filter(item => (now - item.addedAt) <= SEVEN_DAYS_MS);
+        } else {
+          state.favorites = [];
+        }
+      } catch (e) {
+        state.favorites = [];
+      }
+      updateFavoritesBadge();
+    }
+
+    function saveFavorites() {
+      try {
+        localStorage.setItem('ismlar_favorites_v2', JSON.stringify(state.favorites));
+      } catch (e) {}
+      updateFavoritesBadge();
+    }
+
+    function isFavorite(itemId) {
+      return state.favorites.some(f => f.id === itemId);
+    }
+
+    function updateFavoritesBadge() {
+      const badge = document.getElementById('favHeaderBadge');
+      if (badge) badge.textContent = state.favorites.length;
+    }
+
+    function getRemainingDays(addedAt) {
+      const elapsed = Date.now() - addedAt;
+      const remaining = SEVEN_DAYS_MS - elapsed;
+      if (remaining <= 0) return "0 kun qoldi";
+      const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+      if (days >= 1) return `${days} kun qoldi`;
+      const hours = Math.floor(remaining / (60 * 60 * 1000));
+      return `${hours} soat qoldi`;
+    }
+
+    function renderFavoritesModal() {
+      const list = document.getElementById('favNamesList');
+      const empty = document.getElementById('favEmptyState');
+      if (!list) return;
+
+      list.innerHTML = '';
+      if (state.favorites.length === 0) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+
+      if (empty) empty.style.display = 'none';
+      state.favorites.forEach(fav => {
+        const item = (window.ALL_NAMES || []).find(x => x.id === fav.id);
+        if (item) {
+          list.appendChild(createNameAccordionElement(item, fav.addedAt));
+        }
+      });
+    }
+
+    function loadLocalViews() {
+      try {
+        const stored = localStorage.getItem('ismlar_views');
+        if (stored) state.userViews = JSON.parse(stored);
+      } catch (e) {}
+    }
+
+    function recordView(itemId) {
+      state.userViews[itemId] = (state.userViews[itemId] || 0) + 1;
+      try {
+        localStorage.setItem('ismlar_views', JSON.stringify(state.userViews));
+      } catch (e) {}
+
+      const item = (window.ALL_NAMES || []).find(x => x.id === itemId);
+      if (item) {
+        const total = item.v + state.userViews[itemId];
+        const badge = document.getElementById(`viewBadge_${itemId}`);
+        if (badge) badge.innerHTML = `👁️ ${total.toLocaleString()}`;
+        const top10Badge = document.getElementById(`top10ViewBadge_${itemId}`);
+        if (top10Badge) top10Badge.innerHTML = `👁️ ${total.toLocaleString()}`;
+      }
+    }
+
+    function getTotalViews(item) {
+      return (item.v || 50) + (state.userViews[item.id] || 0);
+    }
+
+    function loadCustomEdits() {
+      try {
+        // Восстановление добавленных имён
+        const added = JSON.parse(localStorage.getItem('ismlar_added_names') || '[]');
+        if (Array.isArray(added) && added.length && window.ALL_NAMES) {
+          const existingIds = new Set(window.ALL_NAMES.map(x => x.id));
+          added.forEach(item => {
+            if (!existingIds.has(item.id)) {
+              window.ALL_NAMES.unshift(item);
+              existingIds.add(item.id);
+            }
+          });
+        }
+
+        // Фильтрация удалённых имён
+        const deleted = JSON.parse(localStorage.getItem('ismlar_deleted_ids') || '[]');
+        if (Array.isArray(deleted) && deleted.length && window.ALL_NAMES) {
+          window.ALL_NAMES = window.ALL_NAMES.filter(x => !deleted.includes(x.id));
+        }
+
+        // Применение отредактированных полей
+        const stored = localStorage.getItem('ismlar_custom_edits');
+        if (stored && window.ALL_NAMES) {
+          const edits = JSON.parse(stored);
+          Object.keys(edits).forEach(id => {
+            const numId = parseInt(id, 10);
+            const idx = window.ALL_NAMES.findIndex(x => x.id === numId);
+            if (idx !== -1) {
+              window.ALL_NAMES[idx] = { ...window.ALL_NAMES[idx], ...edits[id] };
+            }
+          });
+        }
+      } catch (e) {}
+    }
+
+    window.handleAdminSearch = function (val) {
+      const q = (val || '').trim().toLowerCase();
+      const resBox = document.getElementById('adminQuickResults');
+      if (!q) { resBox.style.display = 'none'; return; }
+
+      const matches = (window.ALL_NAMES || []).filter(item => 
+        (item.l || '').toLowerCase().includes(q)
+      ).slice(0, 10);
+
+      resBox.innerHTML = '';
+      matches.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'admin-res-row';
+        row.textContent = `${item.l} (${item.g === 'm' ? "O'g'il" : "Qiz"})`;
+        row.addEventListener('click', () => {
+          document.getElementById('adminEditForm').style.display = 'block';
+          document.getElementById('editItemId').value = item.id;
+          document.getElementById('editingNameDisplay').textContent = item.l;
+          document.getElementById('editNameLotin').value = item.l || '';
+          document.getElementById('editGender').value = item.g || 'm';
+          document.getElementById('editLang').value = item.lang || '';
+          document.getElementById('editMeaning').value = item.m || '';
+          document.getElementById('editViews').value = getTotalViews(item);
+          resBox.style.display = 'none';
+        });
+        resBox.appendChild(row);
+      });
+      resBox.style.display = 'block';
+    };
+
+    window.handleSaveNameEdit = function () {
+      const id = parseInt(document.getElementById('editItemId').value, 10);
+      const item = (window.ALL_NAMES || []).find(x => x.id === id);
+      if (!item) return;
+
+      item.l = document.getElementById('editNameLotin').value.trim();
+      item.g = document.getElementById('editGender').value;
+      item.lang = document.getElementById('editLang').value.trim();
+      item.m = document.getElementById('editMeaning').value.trim();
+      item.v = parseInt(document.getElementById('editViews').value, 10) || item.v;
+
+      try {
+        let edits = JSON.parse(localStorage.getItem('ismlar_custom_edits') || '{}');
+        edits[item.id] = item;
+        localStorage.setItem('ismlar_custom_edits', JSON.stringify(edits));
+      } catch (e) {}
+
+      const badge = document.getElementById('adminSaveStatus');
+      if (badge) {
+        badge.style.display = 'inline-block';
+        setTimeout(() => { badge.style.display = 'none'; }, 2000);
+      }
+
+      if (state.activeLetter) window.selectLetter(state.activeLetter);
+      renderTop10();
+    };
+
+    window.handleExportDb = function () {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.ALL_NAMES || []));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "ismlar_yangilangan_baza.json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    };
+
+    function createNameAccordionElement(item, addedAtTime = null) {
+      const primaryName = item.l || '';
+      const totalViews = getTotalViews(item);
+      const isFav = isFavorite(item.id);
+
+      const shareUrl = window.location.href.split('#')[0];
+      const shareText = `👶 ${primaryName} — ${item.m || ''}\n\nManba: Ismlar.uz`;
+      const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'name-accordion-item';
+      wrap.id = `accordion_${item.id}`;
+
+      const expireTag = addedAtTime ? `<span class="fav-expire-tag">⏳ ${getRemainingDays(addedAtTime)}</span>` : '';
+
+      wrap.innerHTML = `
+        <div class="accordion-header">
+          <div class="accordion-left">
+            <button type="button" class="btn-fav-toggle fav-btn-${item.id}">
+              ${isFav ? '❤️' : '🤍'}
+            </button>
+            <strong class="name-primary">${primaryName}</strong>
+            ${expireTag}
+          </div>
+          <div class="accordion-right">
+            <span class="view-badge" id="viewBadge_${item.id}">👁️ ${totalViews.toLocaleString()}</span>
+            <span>▼</span>
+          </div>
+        </div>
+        <div class="accordion-body">
+          <div class="card-meta-tags">
+            <span class="meta-chip"><b>Kelib chiqishi:</b> ${item.lang || "O'zbekcha"}</span>
+            <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 O'g'il bola" : "👧 Qiz bola"}</span>
+          </div>
+          <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>
+          <div class="card-share-block">
+            <div class="share-buttons-group">
+              <a href="${tgUrl}" target="_blank" class="share-action-btn tg">✈️ Telegram</a>
+              <a href="${waUrl}" target="_blank" class="share-action-btn wa">💬 WhatsApp</a>
+              <button type="button" class="share-action-btn copy btn-copy" data-text="${shareText}">📋 Nusxa olish</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      wrap.querySelector(`.fav-btn-${item.id}`).addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.toggleFavorite(item.id);
+      });
+
+      wrap.querySelector('.btn-copy').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const txt = e.currentTarget.getAttribute('data-text');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(txt).then(() => alert("Ism ma'lumoti nusxalandi!"));
+        } else {
+          prompt("Nusxalang:", txt);
+        }
+      });
+
+      wrap.querySelector('.accordion-header').addEventListener('click', () => {
+        const isOpen = wrap.classList.toggle('open');
+        if (isOpen) {
+          recordView(item.id);
+        }
+      });
+
+      return wrap;
+    }
+
+    // Раскрывающийся аккордеон прямо в Топ-10
+    function renderTop10() {
+      const grid = document.getElementById('top10Grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const filtered = (window.ALL_NAMES || []).filter(item => item.g === state.gender);
+      filtered.sort((a, b) => getTotalViews(b) - getTotalViews(a));
+
+      filtered.slice(0, 10).forEach((item, index) => {
+        const primaryName = item.l || '';
+        const isFav = isFavorite(item.id);
+        const totalViews = getTotalViews(item);
+        const rank = index + 1;
+
+        const shareUrl = window.location.href.split('#')[0];
+        const shareText = `👶 ${primaryName} — ${item.m || ''}\n\nManba: Ismlar.uz`;
+        const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+
+        const card = document.createElement('div');
+        card.className = `top10-card rank-${rank}`;
+        card.id = `top10_card_${item.id}`;
+        card.innerHTML = `
+          <div class="top10-card-header">
+            <div class="top10-row-top">
+              <span class="rank-badge">#${rank}</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <button type="button" class="btn-fav-toggle fav-btn-${item.id}" title="Tanlanganlarga qo'shish">
+                  ${isFav ? '❤️' : '🤍'}
+                </button>
+                <span class="view-badge" id="top10ViewBadge_${item.id}">👁️ ${totalViews.toLocaleString()}</span>
+                <span class="top10-chevron">▼</span>
+              </div>
+            </div>
+            <div class="top10-name-text">${primaryName}</div>
+            <div class="top10-meaning-preview">${item.m || ''}</div>
+          </div>
+          <div class="top10-card-body" style="display: none;">
+            <div class="card-meta-tags">
+              <span class="meta-chip"><b>Kelib chiqishi:</b> ${item.lang || "O'zbekcha"}</span>
+              <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 O'g'il bola" : "👧 Qiz bola"}</span>
+            </div>
+            <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>
+            <div class="card-share-block">
+              <div class="share-buttons-group">
+                <a href="${tgUrl}" target="_blank" class="share-action-btn tg">✈️ Telegram</a>
+                <a href="${waUrl}" target="_blank" class="share-action-btn wa">💬 WhatsApp</a>
+                <button type="button" class="share-action-btn copy btn-copy-top10" data-text="${shareText}">📋 Nusxa olish</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const favBtn = card.querySelector(`.fav-btn-${item.id}`);
+        favBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.toggleFavorite(item.id);
+        });
+
+        const copyBtn = card.querySelector('.btn-copy-top10');
+        copyBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const txt = copyBtn.getAttribute('data-text');
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(txt).then(() => alert("Ism ma'lumoti nusxalandi!"));
+          } else {
+            prompt("Nusxalang:", txt);
+          }
+        });
+
+        const cardHeader = card.querySelector('.top10-card-header');
+        cardHeader.addEventListener('click', () => {
+          const body = card.querySelector('.top10-card-body');
+          const chevron = card.querySelector('.top10-chevron');
+          const preview = card.querySelector('.top10-meaning-preview');
+          const isOpen = body.style.display === 'block';
+
+          if (isOpen) {
+            body.style.display = 'none';
+            card.classList.remove('open');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+            if (preview) preview.style.display = '-webkit-box';
+          } else {
+            body.style.display = 'block';
+            card.classList.add('open');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+            if (preview) preview.style.display = 'none';
+            recordView(item.id);
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderAlphabetBar() {
+      const bar = document.getElementById('alphabetBar');
+      if (!bar) return;
+      bar.innerHTML = '';
+      LATIN_ALPHABET.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'letter-btn';
+        if (state.activeLetter === letter) btn.classList.add('active');
+        btn.textContent = letter;
+        btn.addEventListener('click', () => window.selectLetter(letter));
+        bar.appendChild(btn);
+      });
+    }
+
+    function renderLetterNamesSection(letter, names) {
+      const sec = document.getElementById('sectionLetterNames');
+      const bubble = document.getElementById('activeLetterBubble');
+      const title = document.getElementById('letterResultsTitle');
+      const count = document.getElementById('letterResultsCount');
+      const list = document.getElementById('letterNamesList');
+
+      if (bubble) bubble.textContent = letter;
+      if (title) title.textContent = `"${letter}" harfi bilan boshlanuvchi ismlar`;
+      if (count) count.textContent = `${names.length} ta ism topildi`;
+
+      if (!list) return;
+      list.innerHTML = '';
+      if (names.length === 0) {
+        list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">Bu harf bo'yicha ismlar topilmadi</div>`;
+      } else {
+        names.forEach(item => list.appendChild(createNameAccordionElement(item)));
+      }
+
+      if (sec) {
+        sec.style.display = 'block';
+        sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function handleSearchInput(query) {
+      state.searchQuery = (query || '').trim().toLowerCase();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      const searchSec = document.getElementById('sectionSearchResults');
+      const letterSec = document.getElementById('sectionLetterNames');
+      const top10Sec = document.getElementById('sectionTop10');
+      const alphaSec = document.getElementById('sectionAlphabet');
+
+      if (!state.searchQuery) {
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (searchSec) searchSec.style.display = 'none';
+        if (top10Sec) top10Sec.style.display = 'block';
+        if (alphaSec) alphaSec.style.display = 'block';
+        if (state.activeLetter && letterSec) letterSec.style.display = 'block';
+        return;
+      }
+
+      if (clearBtn) clearBtn.style.display = 'flex';
+      if (searchSec) searchSec.style.display = 'block';
+      if (letterSec) letterSec.style.display = 'none';
+
+      const matches = (window.ALL_NAMES || []).filter(item => {
+        if (item.g !== state.gender) return false;
+        return (item.l || '').toLowerCase().includes(state.searchQuery) ||
+               (item.m || '').toLowerCase().includes(state.searchQuery);
+      });
+
+      const badge = document.getElementById('searchCountBadge');
+      if (badge) badge.textContent = `${matches.length} ta ism`;
+      const list = document.getElementById('searchResultsList');
+      if (!list) return;
+      list.innerHTML = '';
+      matches.slice(0, 50).forEach(item => list.appendChild(createNameAccordionElement(item)));
+    }
+
+    function showStep(step) {
+      const welcome = document.getElementById('stepWelcome');
+      const gender = document.getElementById('stepGender');
+      const catalog = document.getElementById('catalogArea');
+
+      if (welcome) welcome.style.display = (step === 'welcome') ? 'block' : 'none';
+      if (gender) gender.style.display = (step === 'gender') ? 'block' : 'none';
+      if (catalog) catalog.style.display = (step === 'catalog') ? 'block' : 'none';
+
+      if (step === 'catalog') {
+        renderAlphabetBar();
+        renderTop10();
+      }
+    }
+
+    function checkAdminUrl() {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      if (path.endsWith('/admin') || path.endsWith('/admin/') || hash === '#admin' || search.includes('admin')) {
+        setTimeout(() => {
+          window.openAdminModal();
+        }, 200);
+      }
+    }
+
+    function init() {
+      loadLocalViews();
+      loadCustomEdits();
+      loadFavorites();
+      
+      const closeLetterBtn = document.getElementById('closeLetterResultsBtn');
+      if (closeLetterBtn) {
+        closeLetterBtn.addEventListener('click', () => {
+          state.activeLetter = null;
+          const sec = document.getElementById('sectionLetterNames');
+          if (sec) sec.style.display = 'none';
+          renderAlphabetBar();
+        });
+      }
+
+      const sIn = document.getElementById('searchInput');
+      if (sIn) {
+        sIn.addEventListener('input', (e) => handleSearchInput(e.target.value));
+      }
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn && sIn) {
+        clearBtn.addEventListener('click', () => {
+          sIn.value = ''; handleSearchInput('');
+        });
+      }
+
+      const logo = document.getElementById('logoLink');
+      if (logo) {
+        logo.addEventListener('click', (e) => {
+          e.preventDefault();
+          showStep('welcome');
+        });
+      }
+
+      const admPass = document.getElementById('adminPasswordInput');
+      if (admPass) {
+        admPass.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') window.handleAdminLogin();
+        });
+      }
+
+      showStep('welcome');
+      checkAdminUrl();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+  })();
+  </script>
+</body>
+</html>
