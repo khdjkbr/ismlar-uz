@@ -1,4 +1,4 @@
-name: Deploy Ismlar.uz to GitHub Pages
+name: Deploy BolagaIsm to GitHub Pages
 
 on:
   push:
@@ -32,7 +32,11 @@ jobs:
 
       - name: Auto-convert Excel to names_data.js
         run: |
-          python convert_excel_to_json.py || true
+          if [ -f "uz_names.xlsx" ]; then
+            python convert_excel_to_json.py uz_names.xlsx
+          elif compgen -G "*.xlsx" > /dev/null; then
+            python convert_excel_to_json.py *.xlsx
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
