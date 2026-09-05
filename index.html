@@ -609,10 +609,10 @@
       </div>
     </section>
 
-    <!-- 3: KATALOG -->
+    <!-- 3: KATALOG (Алфавит -> Топ-10 -> Все имена) -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- ALIFBO -->
+      <!-- 1. ALIFBO -->
       <section class="section-alphabet">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -623,7 +623,18 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- ISMLAR ROYXATI -->
+      <!-- 2. TOP 10 (ПЕРЕНЕСЕНО НАД СПИСКОМ ВСЕХ ИМЕН) -->
+      <section class="section-top10">
+        <div class="section-header-row">
+          <h2 class="section-heading">
+            <span>⭐</span> <span>Eng kop korilgan 10 ta ism</span>
+          </h2>
+          <span class="rank-badge" id="top10GenderBadge">Ogil bolalar uchun</span>
+        </div>
+        <div class="top10-grid" id="top10Grid"></div>
+      </section>
+
+      <!-- 3. BARCHA ISMLAR ROYXATI -->
       <section class="section-letter-names">
         <div class="letter-results-header">
           <div class="letter-title-badge">
@@ -637,17 +648,6 @@
 
         <div class="names-accordion-list" id="letterNamesList"></div>
         <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana korsatish (50 ta)</button>
-      </section>
-
-      <!-- TOP 10 -->
-      <section class="section-top10">
-        <div class="section-header-row">
-          <h2 class="section-heading">
-            <span>⭐</span> <span>Eng kop korilgan 10 ta ism</span>
-          </h2>
-          <span class="rank-badge" id="top10GenderBadge">Ogil bolalar uchun</span>
-        </div>
-        <div class="top10-grid" id="top10Grid"></div>
       </section>
 
     </div>
@@ -664,14 +664,12 @@
         Farzandingiz uchun eng chiroyli, jarangdor va manoli ozbek ismlari toliq katalogi.
       </p>
 
-      <!-- Блок статистики с обновленными названиями текста -->
       <div class="footer-stats-box" id="footerStatsBox">
         <span class="stat-item">📚 Jami ismlar soni: <b id="statTotal">1,000+</b></span>
         <span class="stat-item">👦 O'g'il bolalar ismi: <b id="statBoys">600+</b></span>
         <span class="stat-item">👧 Qiz bolalar ismi: <b id="statGirls">400+</b></span>
       </div>
 
-      <!-- Кнопки в футере -->
       <div class="footer-links">
         <a href="about.html">Biz haqimizda</a>
         <span>•</span>
@@ -726,27 +724,30 @@
   (function () {
     'use strict';
 
+    const TOP_BOYS_NAMES = ["Muhammad", "Mustafo", "Imron", "Ali", "Umar", "Zubayr", "Zayd", "Ayub", "Jahongir", "Yusuf"];
+    const TOP_GIRLS_NAMES = ["Sadiya", "Safiya", "Maryam", "Oyisha", "Aziza", "Muslima", "Mubina", "Hadicha", "Sumayya", "Imona"];
+
     const CORE_NAMES = [
-      {id:1, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari.", v:19500},
-      {id:2, l:"Mustafo", g:"m", lang:"Arabcha", m:"Tanlangan, tanho, saylangan; Muhammad (s.a.v.)ning muborak sifatlaridan biri.", v:18200},
-      {id:3, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr koruvchi, obodlik ramzi.", v:17400},
-      {id:4, l:"Ali", g:"m", lang:"Arabcha", m:"Oliy, yuksak martabali; hazrati Ali ibn Abu Tolib nomi bilan bogliq tabarruk ism.", v:16800},
-      {id:5, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr koruvchi, tabarruk va adolatli inson.", v:15900},
-      {id:6, l:"Zubayr", g:"m", lang:"Arabcha", m:"Kuchli, qudratli, jasur va mard yigit.", v:14500},
-      {id:7, l:"Zayd", g:"m", lang:"Arabcha", m:"Osuvchi, ziyoda boluvchi, barakali.", v:13800},
-      {id:8, l:"Ayub", g:"m", lang:"Arabcha", m:"Sabr-toqatli, sinovlarga dosh beruvchi paygambarimiz nomi.", v:13100},
-      {id:9, l:"Jahongir", g:"m", lang:"Forscha", m:"Jahonni egallovchi, dunyoni zabt etuvchi hukmdor.", v:12500},
-      {id:10, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, gozallik va jamol ramzi bolgan paygambar ismi.", v:11900},
-      {id:11, l:"Sadiya", g:"f", lang:"Arabcha", m:"Baxtli, saodatli, omadli va quvonchli qiz.", v:19800},
-      {id:12, l:"Safiya", g:"f", lang:"Arabcha", m:"Sof, pokiza, tanlangan, chin dost.", v:18600},
-      {id:13, l:"Maryam", g:"f", lang:"Arabcha", m:"Ibodatgoy, pokiza; Iso paygambarning onalari nomi.", v:17900},
-      {id:14, l:"Oyisha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli va pokdomon ayol.", v:17100},
-      {id:15, l:"Aziza", g:"f", lang:"Arabcha", m:"Qadrli, hurmatli, ulug va aziz inson.", v:16400},
-      {id:16, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojoy, iymonli va odoqli qiz.", v:15200},
-      {id:17, l:"Mubina", g:"f", lang:"Arabcha", m:"Ochiq-oydin, ravshan, porloq va haqiqatni korsatuvchi.", v:14300},
-      {id:18, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi; Paygambarimizning ilk zavjalari muborak ismlari.", v:13700},
-      {id:19, l:"Sumayya", g:"f", lang:"Arabcha", m:"Yuksak, qadr-qimmati baland, ezozli ayol.", v:12900},
-      {id:20, l:"Imona", g:"f", lang:"Arabcha", m:"Iymonli, etiqodli, Allohga inonuvchi qiz.", v:12100}
+      {id:1, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari."},
+      {id:2, l:"Mustafo", g:"m", lang:"Arabcha", m:"Tanlangan, tanho, saylangan."},
+      {id:3, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr koruvchi."},
+      {id:4, l:"Ali", g:"m", lang:"Arabcha", m:"Oliy, yuksak martabali."},
+      {id:5, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr koruvchi, adolatli."},
+      {id:6, l:"Zubayr", g:"m", lang:"Arabcha", m:"Kuchli, qudratli, jasur va mard yigit."},
+      {id:7, l:"Zayd", g:"m", lang:"Arabcha", m:"Osuvchi, ziyoda boluvchi, barakali."},
+      {id:8, l:"Ayub", g:"m", lang:"Arabcha", m:"Sabr-toqatli, sinovlarga dosh beruvchi."},
+      {id:9, l:"Jahongir", g:"m", lang:"Forscha", m:"Jahonni egallovchi, dunyoni zabt etuvchi."},
+      {id:10, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, gozallik va jamol ramzi."},
+      {id:11, l:"Sadiya", g:"f", lang:"Arabcha", m:"Baxtli, saodatli, omadli va quvonchli qiz."},
+      {id:12, l:"Safiya", g:"f", lang:"Arabcha", m:"Sof, pokiza, tanlangan, chin dost."},
+      {id:13, l:"Maryam", g:"f", lang:"Arabcha", m:"Ibodatgoy, pokiza; Iso paygambarning onalari."},
+      {id:14, l:"Oyisha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli ayol."},
+      {id:15, l:"Aziza", g:"f", lang:"Arabcha", m:"Qadrli, hurmatli, ulug va aziz inson."},
+      {id:16, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojoy, iymonli qiz."},
+      {id:17, l:"Mubina", g:"f", lang:"Arabcha", m:"Ochiq-oydin, ravshan, porloq."},
+      {id:18, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi."},
+      {id:19, l:"Sumayya", g:"f", lang:"Arabcha", m:"Yuksak, qadr-qimmati baland, ezozli ayol."},
+      {id:20, l:"Imona", g:"f", lang:"Arabcha", m:"Iymonli, etiqodli, Allohga inonuvchi qiz."}
     ];
 
     window.ALL_NAMES = CORE_NAMES;
@@ -772,6 +773,7 @@
         : CORE_NAMES;
     }
 
+    // Генерация просмотров от 2000 до 3000 для ТОП-10 строго без повторов (рандомно)
     function processBaseViews(namesArray) {
       let baseViewsMap = {};
       try {
@@ -779,13 +781,43 @@
       } catch(e) {}
 
       let updated = false;
+
+      // Отдельно обрабатываем топ мальчиков и топ девочек
+      ['m', 'f'].forEach(genderKey => {
+        const topNamesList = genderKey === 'm' ? TOP_BOYS_NAMES : TOP_GIRLS_NAMES;
+        
+        topNamesList.forEach((topName, index) => {
+          const found = namesArray.find(x => x.g === genderKey && normalizeStr(x.l) === normalizeStr(topName));
+          if (found) {
+            if (baseViewsMap[found.id] === undefined) {
+              // index 0 -> ранг #1 (ближе к 3000), index 9 -> ранг #10 (ближе к 2000)
+              const center = 3000 - (index * 100);
+              const low = Math.max(2000, center - 60);
+              const high = Math.min(3000, center + 40);
+              
+              let val = Math.floor(Math.random() * (high - low + 1)) + low;
+              // Убедимся, что нет одинаковых среди уже назначенных в этой сессии генерации
+              while (Object.values(baseViewsMap).includes(val)) {
+                val = Math.floor(Math.random() * (high - low + 1)) + low;
+              }
+
+              baseViewsMap[found.id] = val;
+              updated = true;
+            }
+            found.randomBaseView = baseViewsMap[found.id];
+          }
+        });
+      });
+
+      // Для остальных имен вне топа
       namesArray.forEach(item => {
         if (baseViewsMap[item.id] === undefined) {
-          // Если для топ-имен задано большое число v из Excel/CORE, используем его, иначе рандом
-          baseViewsMap[item.id] = item.v !== undefined ? item.v : (200 + ((item.id * 37) % 1000));
+          baseViewsMap[item.id] = 200 + ((item.id * 37) % 1500);
           updated = true;
         }
-        item.randomBaseView = baseViewsMap[item.id];
+        if (item.randomBaseView === undefined) {
+          item.randomBaseView = baseViewsMap[item.id];
+        }
       });
 
       if (updated) {
@@ -1153,10 +1185,21 @@
       if (!grid) return;
       grid.innerHTML = '';
 
-      const filtered = getBaseNames().filter(x => x.g === state.gender);
-      filtered.sort((a, b) => getTotalViews(b) - getTotalViews(a));
+      const topNamesList = state.gender === 'm' ? TOP_BOYS_NAMES : TOP_GIRLS_NAMES;
+      
+      // Находим объекты для топа строго в порядке списка
+      const topItems = [];
+      topNamesList.forEach(nameStr => {
+        const found = getBaseNames().find(x => x.g === state.gender && normalizeStr(x.l) === normalizeStr(nameStr));
+        if (found) {
+          topItems.push(found);
+        }
+      });
 
-      filtered.slice(0, 10).forEach((item, index) => {
+      // Дополнительно сортируем по просмотров (чтобы ранжирование #1-#10 совпадало с убыванием просмотров)
+      topItems.sort((a, b) => getTotalViews(b) - getTotalViews(a));
+
+      topItems.forEach((item, index) => {
         const totalViews = getTotalViews(item);
         const card = document.createElement('div');
         card.className = `top10-card rank-${index + 1}`;
