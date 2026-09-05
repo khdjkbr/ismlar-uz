@@ -1,141 +1,60 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Автоматическая конвертация базы имен uz_names.xlsx в names_data.js для сайта.
-Поддерживает структуру: T/r, Ism, Jinsi, Kelib chiqishi, Ma'nosi.
-"""
-
-import sys
-import os
 import json
+import os
 import pandas as pd
 
-POPULAR_SEEDS = {
-    "Muhammad": 1850, "Madina": 1790, "Yasmina": 1640, "Fotima": 1510,
-    "Rayhona": 1470, "Abdulaziz": 1420, "Oysha": 1420, "Imron": 1390,
-    "Yusuf": 1360, "Zuhro": 1350, "Muslima": 1310, "Alisher": 1280,
-    "Samira": 1260, "Umar": 1250, "Hadicha": 1180, "Javohir": 1150,
-    "Sevinch": 1130, "Behro'z": 1120, "Ulug'bek": 1120, "Temur": 1050,
-    "Shahzoda": 1040, "Amirxon": 980, "Gulnora": 980, "Rustam": 960,
-    "Dildora": 950, "Sardor": 940, "Yulduz": 930, "Ozoda": 920,
-    "Bilol": 920, "Jasur": 910, "Sarvinoz": 910, "Shahnoza": 910,
-    "Lola": 890, "Oybek": 880, "Sherzod": 870, "Zilola": 860,
-    "Otabek": 850, "Barno": 840, "Sanjar": 820, "Davron": 780
-}
+excel_file = 'uz_names.xlsx'
 
-def clean_str(val):
-    if val is None or pd.isna(val):
-        return ""
-    return str(val).strip()
+if not os.path.exists(excel_file):
+    print(f"Error: {excel_file} not found!")
+    exit(1)
 
-def normalize_gender(raw):
-    raw_lower = clean_str(raw).lower()
-    if any(k in raw_lower for k in ['ayol', 'qiz', 'жен', 'female', 'f']):
-        return 'f'
-    return 'm'
+df = pd.read_excel(excel_file)
 
-def convert(excel_path=None, json_path="names_data.json", js_path="names_data.js"):
-    if not excel_path or not os.path.exists(excel_path):
-        candidates = ["uz_names.xlsx"]
-        found = [f for f in candidates if os.path.exists(f)]
-        if found:
-            excel_path = found[0]
-        else:
-            all_xlsx = [f for f in os.listdir('.') if f.endswith('.xlsx')]
-            if all_xlsx:
-                excel_path = all_xlsx[0]
-            else:
-                print("[-] Excel (.xlsx) fayl topilmadi.")
-                return 1
+# Очищаем заголовки колонок от пробелов и приводим к нижнему регистру
+df.columns = [str(c).strip().lower() for c in df.columns]
 
-    print(f"[+] Excel yuklanmoqda: {excel_path}...")
+names_list = []
+
+for idx, row in df.iterrows():
+    # Поиск полей с гибкими названиями колонок
+    lotin = str(row.get('ism', row.get('name', row.get('lotin', row.iloc[0])))).strip()
+    if not lotin or lotin.lower() == 'nan':
+        continue
+
+    # Определение пола (m / f)
+    raw_gender = str(row.get('jinsi', row.get('gender', row.get('jins', 'm')))).strip().lower()
+    gender = 'f' if ('qiz' in raw_gender or 'f' in raw_gender or 'жен' in raw_gender) else 'm'
+
+    # Происхождение
+    lang = str(row.get('kelib_chiqishi', row.get('til', row.get('lang', "O'zbekcha")))).strip()
+    if lang.lower() == 'nan' or not lang:
+        lang = "O'zbekcha"
+
+    # Значение / ma'nosi
+    meaning = str(row.get('manosi', row.get("ma'nosi", row.get('meaning', row.get('izoh', ''))))).strip()
+    if meaning.lower() == 'nan':
+        meaning = "Ma'lumot kiritilmagan."
+
+    # Просмотры
+    views = row.get('views', row.get('korishlar', 100))
     try:
-        df_raw = pd.read_excel(excel_path, header=None)
-    except Exception as e:
-        print(f"[-] Xatolik: {e}")
-        return 1
+        views = int(views)
+    except:
+        views = 100
 
-    header_idx = None
-    for idx, row in df_raw.iterrows():
-        row_str = " ".join([str(x) for x in row.values if pd.notna(x)]).lower()
-        if "ism" in row_str or "jinsi" in row_str or "kelib chiqishi" in row_str or "ma'no" in row_str:
-            header_idx = idx
-            break
+    names_list.append({
+        "id": idx + 1,
+        "l": lotin,
+        "g": gender,
+        "lang": lang,
+        "m": meaning,
+        "v": views
+    })
 
-    if header_idx is not None:
-        df = pd.read_excel(excel_path, skiprows=header_idx)
-    else:
-        df = pd.read_excel(excel_path)
+# Записываем в names_data.js для index.html
+js_content = f"window.ALL_NAMES = {json.dumps(names_list, ensure_ascii=False, indent=2)};"
 
-    cols = list(df.columns)
-    col_id = cols[0]
-    col_name = cols if len(cols) > 1 else cols[0]
-    col_gender = cols if len(cols) > 2 else cols[0]
-    col_lang = cols if len(cols) > 3 else cols[0]
-    col_meaning = cols[4] if len(cols) > 4 else cols[0]
+with open('names_data.js', 'w', encoding='utf-8') as f:
+    f.write(js_content)
 
-    for c in cols:
-        cl = str(c).lower().strip()
-        if cl in ['t/r', '№', 'id', 'tartib']:
-            col_id = c
-        elif any(k in cl for k in ['ism', 'lotin', 'name']):
-            col_name = c
-        elif any(k in cl for k in ['jins', 'gender']):
-            col_gender = c
-        elif any(k in cl for k in ['kelib chiqishi', 'til', 'etimolog', 'origin']):
-            col_lang = c
-        elif any(k in cl for k in ['ma\'no', 'mano', 'izoh', 'meaning']):
-            col_meaning = c
-
-    items = []
-    current_id = 1
-
-    for _, row in df.iterrows():
-        name = clean_str(row.get(col_name, ''))
-        if not name or name.lower() in ['ism', 'name']:
-            continue
-
-        raw_id = row.get(col_id)
-        try:
-            item_id = int(raw_id) if pd.notna(raw_id) else current_id
-        except Exception:
-            item_id = current_id
-
-        gender_val = normalize_gender(row.get(col_gender, 'm'))
-        lang_val = clean_str(row.get(col_lang, '')) or "O'zbekcha"
-        meaning_val = clean_str(row.get(col_meaning, ''))
-
-        if name in POPULAR_SEEDS:
-            views = POPULAR_SEEDS[name]
-        else:
-            views = 120 + (abs(hash(name)) % 450)
-
-        items.append({
-            "id": item_id,
-            "l": name,
-            "g": gender_val,
-            "lang": lang_val,
-            "m": meaning_val,
-            "v": views
-        })
-        current_id += 1
-
-    if not items:
-        print("[-] Ismlar topilmadi.")
-        return 1
-
-    # Saqlash
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
-
-    with open(js_path, "w", encoding="utf-8") as f:
-        f.write("window.ALL_NAMES = ")
-        json.dump(items, f, ensure_ascii=False)
-        f.write(";\n")
-
-    print(f"[+] Muvaffaqiyatli! {len(items)} ta ism names_data.js ga saqlandi.")
-    return 0
-
-if __name__ == "__main__":
-    target = sys.argv if len(sys.argv) > 1 else None
-    sys.exit(convert(target))
+print(f"Successfully generated names_data.js with {len(names_list)} names!")
