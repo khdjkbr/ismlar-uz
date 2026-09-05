@@ -8,7 +8,17 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- Юридические страницы -->
+  <!-- Информационные и юридические страницы -->
+  <url>
+    <loc>https://bolagaism.uz/about.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://bolagaism.uz/contact.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
   <url>
     <loc>https://bolagaism.uz/privacy.html</loc>
     <changefreq>monthly</changefreq>
@@ -42,7 +52,7 @@
   <url><loc>https://bolagaism.uz/?jins=m&amp;harf=H</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=m&amp;harf=I</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=m&amp;harf=J</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=K</loc><changefreq>weekly</changefreq><priority>0.8</priority></URL>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=K</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=m&amp;harf=L</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=m&amp;harf=M</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=m&amp;harf=N</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
@@ -81,7 +91,7 @@
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=Q</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=R</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=S</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://bolagaism.uz>[cite: 1]?jins=f&amp;harf=T</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=T</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=U</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=V</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=X</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
