@@ -619,7 +619,7 @@
       </div>
     </section>
 
-    <!-- 3: KATALOG (Алфавит ➔ Топ-10 ➔ Секция выбранной буквы) -->
+    <!-- 3: KATALOG (Алфавит ➔ Список по букве ➔ Топ-10) -->
     <div id="catalogArea" style="display: none;">
 
       <!-- 1. ALIFBO -->
@@ -633,18 +633,7 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- 2. TOP 10 -->
-      <section class="section-top10">
-        <div class="section-header-row">
-          <h2 class="section-heading">
-            <span>⭐</span> <span>Eng ko'p ko'rilgan 10 ta ism</span>
-          </h2>
-          <span class="rank-badge" id="top10GenderBadge">O'g'il bolalar uchun</span>
-        </div>
-        <div class="top10-grid" id="top10Grid"></div>
-      </section>
-
-      <!-- 3. СЕКЦИЯ РЕЗУЛЬТАТОВ ПО БУКВЕ (Появляется ТОЛЬКО при выборе буквы, без показа всего списка сразу) -->
+      <!-- 2. СПИСОК ПО БУКВЕ (Появляется строго между алфавитом и топ-10 при выборе буквы) -->
       <section class="section-letter-names" id="letterNamesSection" style="display: none;">
         <div class="letter-results-header">
           <div class="letter-title-badge">
@@ -658,6 +647,17 @@
 
         <div class="names-accordion-list" id="letterNamesList"></div>
         <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
+      </section>
+
+      <!-- 3. TOP 10 -->
+      <section class="section-top10">
+        <div class="section-header-row">
+          <h2 class="section-heading">
+            <span>⭐</span> <span>Eng ko'p ko'rilgan 10 ta ism</span>
+          </h2>
+          <span class="rank-badge" id="top10GenderBadge">O'g'il bolalar uchun</span>
+        </div>
+        <div class="top10-grid" id="top10Grid"></div>
       </section>
 
     </div>
@@ -950,8 +950,7 @@
     window.selectGender = function (gender) {
       state.gender = gender;
       state.activeLetter = null;
-      
-      // Скрываем секцию списка имён по умолчанию при смене пола (показываются только Алфавит и Топ-10)
+
       const letterSec = document.getElementById('letterNamesSection');
       if (letterSec) letterSec.style.display = 'none';
 
@@ -975,7 +974,6 @@
         .trim();
     }
 
-    // При выборе конкретной буквы отображаем список развернутым
     window.selectLetter = function (letter) {
       if (state.activeLetter === letter) {
         state.activeLetter = null;
@@ -988,7 +986,6 @@
       state.activeLetter = letter;
       renderAlphabetBar();
 
-      // Показываем секцию списка имён при клике на букву
       const letterSec = document.getElementById('letterNamesSection');
       if (letterSec) letterSec.style.display = 'block';
 
