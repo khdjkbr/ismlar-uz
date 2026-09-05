@@ -7,6 +7,9 @@
   <title>Bolagaism.uz — O'zbek ismlari ma'nosi to'liq katalogi</title>
   <meta name="description" content="O'zbek ismlari ma'nosi, kelib chiqishi va to'liq izohi. Farzandingiz uchun eng chiroyli ismlar katalogi.">
   
+  <!-- Google AdSense Script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9145965401414117" crossorigin="anonymous"></script>
+
   <!-- SEO Schema.org Structured Data (JSON-LD) -->
   <script type="application/ld+json">
   {
@@ -539,6 +542,18 @@
     }
     .load-more-btn:hover { background: #F0EAE1; }
 
+    /* Стили для рекламных блоков */
+    .ad-container {
+      width: 100%;
+      text-align: center;
+      margin: 24px 0;
+      overflow: hidden;
+      background: rgba(250, 247, 242, 0.6);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      border: 1px dashed var(--border-light);
+    }
+
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -730,6 +745,19 @@
         <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
       </section>
 
+      <!-- Рекламный блок №1 (между результатами/алфавитом и Топ-10) -->
+      <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="1111111111"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </div>
+
       <!-- TOP 10 -->
       <section class="section-top10">
         <div class="section-header-row">
@@ -740,6 +768,19 @@
         </div>
         <div class="top10-grid" id="top10Grid"></div>
       </section>
+
+      <!-- Рекламный блок №2 (перед футером) -->
+      <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="2222222222"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </div>
 
     </div>
 
@@ -817,7 +858,7 @@
   (function () {
     'use strict';
 
-    // Строгий порядок Топ-10 согласно вашему списку
+    // Топ-10 в строгом порядке, заданном вами
     const TOP_BOYS_NAMES = ["Muhammad", "Mustafo", "Imron", "Ali", "Umar", "Zubayr", "Zayd", "Ayub", "Jahongir", "Yusuf"];
     const TOP_GIRLS_NAMES = ["Sadiya", "Safiya", "Maryam", "Oyisha", "Aziza", "Muslima", "Mubina", "Hadicha", "Sumayya", "Imona"];
 
@@ -868,7 +909,6 @@
         : CORE_NAMES;
     }
 
-    // Генерация просмотров строго по вашему порядку: от #1 до #10 (убывание от 3000 до 2000)
     function processBaseViews(namesArray) {
       let baseViewsMap = {};
       try {
@@ -1350,7 +1390,6 @@
       return wrap;
     }
 
-    // Рендеринг Топ-10 строго по вашему списку (порядок элементов сохранен от 1 до 10)
     function renderTop10() {
       window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
       const grid = document.getElementById('top10Grid');
