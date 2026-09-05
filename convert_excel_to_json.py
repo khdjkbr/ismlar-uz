@@ -1,60 +1,95 @@
-import json
 import os
+import json
 import pandas as pd
 
 excel_file = 'uz_names.xlsx'
 
 if not os.path.exists(excel_file):
-    print(f"Error: {excel_file} not found!")
+    print(f"Xato: {excel_file} fayli topilmadi!")
     exit(1)
 
-df = pd.read_excel(excel_file)
+# Читаем Excel файл
+try:
+    df = pd.read_excel(excel_file)
+except Exception as e:
+    print(f"Excel faylni o'qishda xatolik: {e}")
+    exit(1)
 
-# Очищаем заголовки колонок от пробелов и приводим к нижнему регистру
-df.columns = [str(c).strip().lower() for c in df.columns]
+# Если таблица пустая
+if df.empty:
+    print("Excel fayl bo'sh!")
+    exit(1)
 
 names_list = []
 
-for idx, row in df.iterrows():
-    # Поиск полей с гибкими названиями колонок
-    lotin = str(row.get('ism', row.get('name', row.get('lotin', row.iloc[0])))).strip()
-    if not lotin or lotin.lower() == 'nan':
+# Определяем соответствие колонок по смыслу
+cols = list(df.columns)
+col_name_idx = 0
+col_gender_idx = -1
+col_lang_idx = -1
+col_meaning_idx = -1
+
+for idx, c in enumerate(cols):
+    c_str = str(c).strip().lower()
+    if any(k in c_str for k in ['ism', 'name', 'lotin', 'nom']):
+        col_name_idx = idx
+    elif any(k in c_str for k in ['jins', 'gender', 'pol', 'sex']):
+        col_gender_idx = idx
+    elif any(k in c_str for k in ['kelib', 'til', 'lang', 'milli']):
+        col_lang_idx = idx
+    elif any(k in c_str for k in ['mano', "ma'no", 'izoh', 'meaning', 'tafsif']):
+        col_meaning_idx = idx
+
+# Если смысл колонок не распознан по заголовкам, берем по порядку
+if col_gender_idx == -1 and len(cols) > 1:
+    col_gender_idx = 1
+if col_lang_idx == -1 and len(cols) > 2:
+    col_lang_idx = 2
+if col_meaning_idx == -1 and len(cols) > 3:
+    col_meaning_idx = 3
+
+for row_num, row in df.iterrows():
+    # Извлекаем имя
+    raw_name = row.iloc[col_name_idx] if col_name_idx < len(row) else ''
+    if pd.isna(raw_name):
+        continue
+    name_str = str(raw_name).strip()
+    if not name_str or name_str.lower() in ['nan', 'none', 'ism', 'name']:
         continue
 
-    # Определение пола (m / f)
-    raw_gender = str(row.get('jinsi', row.get('gender', row.get('jins', 'm')))).strip().lower()
-    gender = 'f' if ('qiz' in raw_gender or 'f' in raw_gender or 'жен' in raw_gender) else 'm'
+    # Извлекаем пол
+    raw_gender = row.iloc[col_gender_idx] if (col_gender_idx != -1 and col_gender_idx < len(row)) else 'm'
+    gender_str = str(raw_gender).strip().lower() if not pd.isna(raw_gender) else 'm'
+    gender = 'f' if ('qiz' in gender_str or 'f' in gender_str or 'жен' in gender_str or 'аёл' in gender_str or 'ayol' in gender_str) else 'm'
 
-    # Происхождение
-    lang = str(row.get('kelib_chiqishi', row.get('til', row.get('lang', "O'zbekcha")))).strip()
-    if lang.lower() == 'nan' or not lang:
-        lang = "O'zbekcha"
+    # Извлекаем происхождение
+    raw_lang = row.iloc[col_lang_idx] if (col_lang_idx != -1 and col_lang_idx < len(row)) else "O'zbekcha"
+    lang_str = str(raw_lang).strip() if not pd.isna(raw_lang) else "O'zbekcha"
+    if not lang_str or lang_str.lower() == 'nan':
+        lang_str = "O'zbekcha"
 
-    # Значение / ma'nosi
-    meaning = str(row.get('manosi', row.get("ma'nosi", row.get('meaning', row.get('izoh', ''))))).strip()
-    if meaning.lower() == 'nan':
-        meaning = "Ma'lumot kiritilmagan."
+    # Извлекаем значение (ma'nosi)
+    raw_meaning = row.iloc[col_meaning_idx] if (col_meaning_idx != -1 and col_meaning_idx < len(row)) else ""
+    meaning_str = str(raw_meaning).strip() if not pd.isna(raw_meaning) else "Ma'lumot kiritilmagan."
+    if not meaning_str or meaning_str.lower() == 'nan':
+        meaning_str = "Ma'lumot kiritilmagan."
 
-    # Просмотры
-    views = row.get('views', row.get('korishlar', 100))
-    try:
-        views = int(views)
-    except:
-        views = 100
+    # Стартовые просмотры для карточки
+    views_val = 150 + ((row_num * 17) % 850)
 
     names_list.append({
-        "id": idx + 1,
-        "l": lotin,
+        "id": int(row_num + 1),
+        "l": name_str,
         "g": gender,
-        "lang": lang,
-        "m": meaning,
-        "v": views
+        "lang": lang_str,
+        "m": meaning_str,
+        "v": int(views_val)
     })
 
-# Записываем в names_data.js для index.html
-js_content = f"window.ALL_NAMES = {json.dumps(names_list, ensure_ascii=False, indent=2)};"
+# Формируем итоговый JS-файл
+output_js = f"window.ALL_NAMES = {json.dumps(names_list, ensure_ascii=False)};"
 
 with open('names_data.js', 'w', encoding='utf-8') as f:
-    f.write(js_content)
+    f.write(output_js)
 
-print(f"Successfully generated names_data.js with {len(names_list)} names!")
+print(f"Muvaffaqiyatli yakunlandi! Jami {len(names_list)} ta ism 'names_data.js' fayliga saqlandi.")
