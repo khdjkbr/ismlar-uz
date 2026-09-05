@@ -494,14 +494,13 @@
     .search-modal-box { flex-grow: 1; display: flex; align-items: center; background: #FFFFFF; border: 1.5px solid var(--border-light); border-radius: var(--radius-full); padding: 0 14px; }
     #modalSearchInput { width: 100%; border: none; background: transparent; padding: 10px 0; font-family: var(--font-body); font-size: 1rem; outline: none; }
 
-    /* Блок статистики имён с увеличенным на 2pt шрифтом (~1.02rem) */
     .footer-stats-box {
       background: rgba(235, 228, 218, 0.5);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
       padding: 12px 18px;
       margin: 0 auto 14px auto;
-      max-width: 720px;
+      max-width: 780px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -665,14 +664,14 @@
         Farzandingiz uchun eng chiroyli, jarangdor va manoli ozbek ismlari toliq katalogi.
       </p>
 
-      <!-- Блок статистики с обновленными названиями и увеличенным шрифтом (+2pt) -->
+      <!-- Блок статистики с обновленными названиями текста -->
       <div class="footer-stats-box" id="footerStatsBox">
         <span class="stat-item">📚 Jami ismlar soni: <b id="statTotal">1,000+</b></span>
         <span class="stat-item">👦 O'g'il bolalar ismi: <b id="statBoys">600+</b></span>
         <span class="stat-item">👧 Qiz bolalar ismi: <b id="statGirls">400+</b></span>
       </div>
 
-      <!-- Кнопки в футере: Foydalanish shartlari и Bog'lanish поменяны местами -->
+      <!-- Кнопки в футере -->
       <div class="footer-links">
         <a href="about.html">Biz haqimizda</a>
         <span>•</span>
@@ -728,21 +727,26 @@
     'use strict';
 
     const CORE_NAMES = [
-      {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va ezoz sohibining, yani Allohning quli.", v:1420},
-      {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
-      {id:3, l:"Alisher", g:"m", lang:"Arabcha / Forscha", m:"Sherdek jasur, dovyurak bolib ossin va hazrati Ali qollab yursin.", v:1280},
-      {id:4, l:"Amirxon", g:"m", lang:"Ozbekcha", m:"Hokim, yolboshchi; yuksak martabali, ezozli ogil.", v:980},
-      {id:5, l:"Behroz", g:"m", lang:"Forscha", m:"Baxtli, saodatli kunda tugilgan bola.", v:1120},
-      {id:6, l:"Javohir", g:"m", lang:"Arabcha", m:"Qimmatbaho toshlar; bebaho, qimmatli farzand.", v:1150},
-      {id:7, l:"Sardor", g:"m", lang:"Forscha", m:"Yetakchi, boshliq, rahbar; lashkarboshi.", v:940},
-      {id:8, l:"Sherzod", g:"m", lang:"Forscha", m:"Sher bolasi, dovyurak, jasurlar avlodiga mansub ogil.", v:870},
-      {id:9, l:"Temur", g:"m", lang:"Ozbekcha", m:"Temirdek mustahkam, mahkam, chidamli, umri uzoq bola.", v:1050},
-      {id:10, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr koruvchi, obodlik ramzi.", v:1390},
-      {id:11, l:"Madina", g:"f", lang:"Arabcha", m:"Muqaddas ziyoratgoh Madina shahri nomidan olingan gozal qiz.", v:1790},
-      {id:12, l:"Zuhro", g:"f", lang:"Arabcha", m:"Cholpon yulduzidek porloq, ravshan va gozal qiz.", v:1350},
-      {id:13, l:"Yasmina", g:"f", lang:"Arabcha / Forscha", m:"Xushboy yosumin gulidek nafis, latofatli qiz.", v:1640},
-      {id:14, l:"Fotima", g:"f", lang:"Arabcha", m:"Paygambarimiz (s.a.v.)ning suyukli qizlarining muborak ismlari.", v:1510},
-      {id:15, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushboy va dilkash qiz.", v:1470}
+      {id:1, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari.", v:19500},
+      {id:2, l:"Mustafo", g:"m", lang:"Arabcha", m:"Tanlangan, tanho, saylangan; Muhammad (s.a.v.)ning muborak sifatlaridan biri.", v:18200},
+      {id:3, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr koruvchi, obodlik ramzi.", v:17400},
+      {id:4, l:"Ali", g:"m", lang:"Arabcha", m:"Oliy, yuksak martabali; hazrati Ali ibn Abu Tolib nomi bilan bogliq tabarruk ism.", v:16800},
+      {id:5, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr koruvchi, tabarruk va adolatli inson.", v:15900},
+      {id:6, l:"Zubayr", g:"m", lang:"Arabcha", m:"Kuchli, qudratli, jasur va mard yigit.", v:14500},
+      {id:7, l:"Zayd", g:"m", lang:"Arabcha", m:"Osuvchi, ziyoda boluvchi, barakali.", v:13800},
+      {id:8, l:"Ayub", g:"m", lang:"Arabcha", m:"Sabr-toqatli, sinovlarga dosh beruvchi paygambarimiz nomi.", v:13100},
+      {id:9, l:"Jahongir", g:"m", lang:"Forscha", m:"Jahonni egallovchi, dunyoni zabt etuvchi hukmdor.", v:12500},
+      {id:10, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, gozallik va jamol ramzi bolgan paygambar ismi.", v:11900},
+      {id:11, l:"Sadiya", g:"f", lang:"Arabcha", m:"Baxtli, saodatli, omadli va quvonchli qiz.", v:19800},
+      {id:12, l:"Safiya", g:"f", lang:"Arabcha", m:"Sof, pokiza, tanlangan, chin dost.", v:18600},
+      {id:13, l:"Maryam", g:"f", lang:"Arabcha", m:"Ibodatgoy, pokiza; Iso paygambarning onalari nomi.", v:17900},
+      {id:14, l:"Oyisha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli va pokdomon ayol.", v:17100},
+      {id:15, l:"Aziza", g:"f", lang:"Arabcha", m:"Qadrli, hurmatli, ulug va aziz inson.", v:16400},
+      {id:16, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojoy, iymonli va odoqli qiz.", v:15200},
+      {id:17, l:"Mubina", g:"f", lang:"Arabcha", m:"Ochiq-oydin, ravshan, porloq va haqiqatni korsatuvchi.", v:14300},
+      {id:18, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi; Paygambarimizning ilk zavjalari muborak ismlari.", v:13700},
+      {id:19, l:"Sumayya", g:"f", lang:"Arabcha", m:"Yuksak, qadr-qimmati baland, ezozli ayol.", v:12900},
+      {id:20, l:"Imona", g:"f", lang:"Arabcha", m:"Iymonli, etiqodli, Allohga inonuvchi qiz.", v:12100}
     ];
 
     window.ALL_NAMES = CORE_NAMES;
@@ -777,7 +781,8 @@
       let updated = false;
       namesArray.forEach(item => {
         if (baseViewsMap[item.id] === undefined) {
-          baseViewsMap[item.id] = 200 + ((item.id * 37) % 1000);
+          // Если для топ-имен задано большое число v из Excel/CORE, используем его, иначе рандом
+          baseViewsMap[item.id] = item.v !== undefined ? item.v : (200 + ((item.id * 37) % 1000));
           updated = true;
         }
         item.randomBaseView = baseViewsMap[item.id];
