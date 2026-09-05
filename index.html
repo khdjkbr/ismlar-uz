@@ -13,6 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Загрузка сгенерированной базы -->
+  <script src="names_data.js"></script>
+
   <style>
     :root {
       --font-heading: 'Comfortaa', cursive, system-ui, -apple-system, sans-serif;
@@ -369,9 +372,6 @@
       display: flex; align-items: center; justify-content: center;
     }
     body.gender-f .active-letter-bubble { background: var(--girl-color); }
-
-    .letter-res-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; }
-    .letter-res-count { font-size: 0.8rem; color: var(--text-muted); }
 
     .names-accordion-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -802,8 +802,8 @@
   (function () {
     'use strict';
 
-    // Встроенная гарантийная база данных (работает при любых сетевых неполадках)
-    const CORE_NAMES = [
+    // Встроенный аварийный список на случай задержки загрузки
+    const FALLBACK_NAMES = [
       {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va e'zoz sohibining, ya'ni Allohning quli.", v:1420},
       {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Payg'ambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
       {id:3, l:"Alisher", g:"m", lang:"Arabcha / Fors-tojikcha", m:"Sherdek jasur, dovyurak bo'lib o'ssin va hazrati Ali qo'llab yursin.", v:1280},
@@ -814,59 +814,16 @@
       {id:8, l:"Sherzod", g:"m", lang:"Fors-tojikcha", m:"Sher bolasi, dovyurak, jasurlar avlodiga mansub o'g'il.", v:870},
       {id:9, l:"Temur", g:"m", lang:"O'zbekcha", m:"Temirdek mustahkam, mahkam, chidamli, umri uzoq bola.", v:1050},
       {id:10, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr ko'ruvchi, obodlik ramzi.", v:1390},
-      {id:11, l:"Bilol", g:"m", lang:"Arabcha", m:"Yangi tuqqan oy (hilol) yoki chanqoqbosdi suvdek aziz bola.", v:920},
-      {id:12, l:"Davron", g:"m", lang:"Arabcha", m:"Davr sursin, umri shodon, baxtiyor o'tsin, tolei porloq bo'lsin.", v:780},
-      {id:13, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, go'zallik ramzi bo'lgan bola.", v:1360},
-      {id:14, l:"Ulug'bek", g:"m", lang:"O'zbekcha", m:"Buyuk hukmdor, buyuk sulton, beklarning eng ulug'i.", v:1120},
-      {id:15, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr ko'ruvchi, tabarruk va adolatli inson.", v:1250},
-      {id:16, l:"Rustam", g:"m", lang:"Fors-tojikcha", m:"Ulkan gavdali, kuchli, dovyurak bahodir, pahlavon.", v:960},
-      {id:17, l:"Sanjar", g:"m", lang:"Arabcha", m:"Shiddatli, o'tkir, kuchli, g'olib va muzaffar yigit.", v:820},
-      {id:18, l:"Oybek", g:"m", lang:"O'zbekcha", m:"Beklar avlodiga mansub, oydek ko'rkam va baxtli bola.", v:880},
-      {id:19, l:"Otabek", g:"m", lang:"O'zbekcha", m:"Shahzoda, xonzoda; beklar boshlig'i, elning sardori.", v:850},
-      {id:20, l:"Jasur", g:"m", lang:"Arabcha", m:"Qaytmas, mard, jur'atli, jasoratli va dovyurak bola.", v:910},
-      {id:21, l:"Madina", g:"f", lang:"Arabcha", m:"Muqaddas ziyoratgoh Madina shahri nomidan olingan go'zal qiz.", v:1790},
+      {id:11, l:"Madina", g:"f", lang:"Arabcha", m:"Muqaddas ziyoratgoh Madina shahri nomidan olingan go'zal qiz.", v:1790},
       {id:22, l:"Zuhro", g:"f", lang:"Arabcha", m:"Cho'lpon yulduzidek porloq, ravshan va go'zal qiz.", v:1350},
       {id:23, l:"Yasmina", g:"f", lang:"Arabcha / Fors-tojikcha", m:"Xushbo'y yosumin (jasmin) gulidek nafis, latofatli qiz.", v:1640},
       {id:24, l:"Fotima", g:"f", lang:"Arabcha", m:"Payg'ambarimiz (s.a.v.)ning suyukli qizlarining muborak ismlari.", v:1510},
-      {id:25, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushbo'y va dilkash qiz.", v:1470},
-      {id:26, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojo'y, iymonli va odobli qiz.", v:1310},
-      {id:27, l:"Samira", g:"f", lang:"Arabcha", m:"Suhbatdosh, dilkash, yoqimtoy va shirinso'z qiz.", v:1260},
-      {id:28, l:"Shahzoda", g:"f", lang:"Fors-tojikcha", m:"Shohlar avlodiga mansub, aslzoda, malikadek hurmatli qiz.", v:1040},
-      {id:29, l:"Oysha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli va pokdomon ayol.", v:1420},
-      {id:30, l:"Gulnora", g:"f", lang:"Fors-tojikcha", m:"Anor gulidek chiroyli, chehrasi qirmizi, go'zal qiz.", v:980},
-      {id:31, l:"Dildora", g:"f", lang:"Fors-tojikcha", m:"Dildan sevilgan, chin muhabbat sohibasi, suyukli qiz.", v:950},
-      {id:32, l:"Lola", g:"f", lang:"Fors-tojikcha", m:"Loladek yashnagan, go'zal va bahoriy tarovatli qiz.", v:890},
-      {id:33, l:"Barno", g:"f", lang:"Fors-tojikcha", m:"Yosh, navjuvon; xushbichim, kelishgan sohibjamol.", v:840},
-      {id:34, l:"Zilola", g:"f", lang:"Arabcha", m:"Tiniq buloq suvidek pokiza, toza va beg'ubor qiz.", v:860},
-      {id:35, l:"Shahnoza", g:"f", lang:"Fors-tojikcha", m:"Shohona nozli, nazokatli, latofatli va oliyjanob qiz.", v:910},
-      {id:36, l:"Sevinch", g:"f", lang:"O'zbekcha", m:"Shodlik, baxtiyorlik, oilaning sevinchi bo'lgan qiz.", v:1130},
-      {id:37, l:"Yulduz", g:"f", lang:"O'zbekcha", m:"Tolei yulduzdek yuksak va porloq bo'lsin, saodatli bo'lsin.", v:930},
-      {id:38, l:"Ozoda", g:"f", lang:"Fors-tojikcha", m:"Erkin, hur; toza, pokiza, saranjom va begunoh qiz.", v:920},
-      {id:39, l:"Sarvinoz", g:"f", lang:"Fors-tojikcha", m:"Sarv daraxtidek xushqomat, tik qaddi-qomatli va nozik qiz.", v:910},
-      {id:40, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi; Payg'ambarimizning ilk zavjalari muborak ismlari.", v:1180}
+      {id:25, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushbo'y va dilkash qiz.", v:1470}
     ];
 
-    window.ALL_NAMES = CORE_NAMES;
-
-    // Асинхронное подключение полного файла Excel/JSON базы без блокировок
-    function tryLoadFullDatabase() {
-      const paths = ['./names_data.js', 'names_data.js', '/names_data.js'];
-      let i = 0;
-      function next() {
-        if (i >= paths.length) return;
-        const script = document.createElement('script');
-        script.src = paths[i++];
-        script.onload = () => {
-          if (window.ALL_NAMES && window.ALL_NAMES.length > 50) {
-            refreshCurrentView();
-          }
-        };
-        script.onerror = () => next();
-        document.head.appendChild(script);
-      }
-      next();
+    if (!window.ALL_NAMES || !Array.isArray(window.ALL_NAMES) || window.ALL_NAMES.length === 0) {
+      window.ALL_NAMES = FALLBACK_NAMES;
     }
-    tryLoadFullDatabase();
 
     const LATIN_ALPHABET = [
       'A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
@@ -883,15 +840,8 @@
       favorites: []
     };
 
-    function refreshCurrentView() {
-      if (document.getElementById('catalogArea').style.display === 'block') {
-        if (state.activeLetter) {
-          window.selectLetter(state.activeLetter);
-        } else {
-          showAllNamesForGender();
-        }
-        renderTop10();
-      }
+    function getBaseNames() {
+      return (window.ALL_NAMES && Array.isArray(window.ALL_NAMES)) ? window.ALL_NAMES : FALLBACK_NAMES;
     }
 
     window.startChoosing = function () {
@@ -918,7 +868,7 @@
     };
 
     function showAllNamesForGender() {
-      const all = (window.ALL_NAMES || []).filter(x => x.g === state.gender);
+      const all = getBaseNames().filter(x => x.g === state.gender);
       currentRenderedList = all;
       currentLimit = 50;
 
@@ -944,7 +894,7 @@
       state.activeLetter = letter;
       renderAlphabetBar();
 
-      const names = (window.ALL_NAMES || []).filter(item => {
+      const names = getBaseNames().filter(item => {
         if (item.g !== state.gender) return false;
         const name = item.l || '';
         if (!name) return false;
@@ -1038,7 +988,7 @@
         return;
       }
 
-      const matches = (window.ALL_NAMES || []).filter(item => {
+      const matches = getBaseNames().filter(item => {
         return (item.l || '').toLowerCase().includes(q) || (item.m || '').toLowerCase().includes(q);
       });
 
@@ -1069,7 +1019,7 @@
         } else {
           if (empty) empty.style.display = 'none';
           state.favorites.forEach(fav => {
-            const item = (window.ALL_NAMES || []).find(x => x.id === fav.id);
+            const item = getBaseNames().find(x => x.id === fav.id);
             if (item) list.appendChild(createNameAccordionElement(item));
           });
         }
@@ -1164,7 +1114,7 @@
       if (!grid) return;
       grid.innerHTML = '';
 
-      const list = (window.ALL_NAMES || []).filter(x => x.g === state.gender).slice(0, 10);
+      const list = getBaseNames().filter(x => x.g === state.gender).slice(0, 10);
       list.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = `top10-card rank-${index + 1}`;
