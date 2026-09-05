@@ -494,6 +494,29 @@
     .search-modal-box { flex-grow: 1; display: flex; align-items: center; background: #FFFFFF; border: 1.5px solid var(--border-light); border-radius: var(--radius-full); padding: 0 14px; }
     #modalSearchInput { width: 100%; border: none; background: transparent; padding: 10px 0; font-family: var(--font-body); font-size: 1rem; outline: none; }
 
+    /* Стили для нового блока статистики в футере */
+    .footer-stats-box {
+      background: rgba(235, 228, 218, 0.5);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin: 0 auto 14px auto;
+      max-width: 620px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .stat-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .site-footer {
       margin-top: 40px; border-top: 1px solid var(--border-light);
       padding: 28px 0 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem;
@@ -505,7 +528,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 12px;
-      margin: 12px 0;
+      margin: 10px 0;
       font-size: 0.85rem;
     }
     .footer-links a {
@@ -520,6 +543,7 @@
     @media (max-width: 768px) {
       .top10-grid, .gender-choice-grid { grid-template-columns: 1fr; }
       .letter-btn { flex: 1 0 calc(14.28% - 6px); height: 38px; font-size: 0.9rem; }
+      .footer-stats-box { flex-direction: column; gap: 6px; padding: 10px; }
     }
   </style>
 </head>
@@ -640,15 +664,25 @@
       <p class="footer-desc">
         Farzandingiz uchun eng chiroyli, jarangdor va manoli ozbek ismlari toliq katalogi.
       </p>
+
+      <!-- Новый блок статистики с округленными значениями и значками -->
+      <div class="footer-stats-box" id="footerStatsBox">
+        <span class="stat-item">📚 Bazada: <b id="statTotal">1,000+</b></span>
+        <span class="stat-item">👦 Ogil: <b id="statBoys">600+</b></span>
+        <span class="stat-item">👧 Qiz: <b id="statGirls">400+</b></span>
+      </div>
+
+      <!-- Кнопки в футере: Bog'lanish и Foydalanish shartlari поменяны местами -->
       <div class="footer-links">
         <a href="about.html">Biz haqimizda</a>
         <span>•</span>
-        <a href="contact.html">Bog'lanish</a>
+        <a href="terms.html">Foydalanish shartlari</a>
         <span>•</span>
         <a href="privacy.html">Maxfiylik siyosati</a>
         <span>•</span>
-        <a href="terms.html">Foydalanish shartlari</a>
+        <a href="contact.html">Bog'lanish</a>
       </div>
+
       <div class="footer-bottom-row">
         <span>© 2026 Bolagaism.uz — Barcha huquqlar himoyalangan.</span>
         <span>Produced by <b>Suniy.Studio</b></span>
@@ -734,6 +768,86 @@
         : CORE_NAMES;
     }
 
+    // Генерация и сохранение рандомных базовых просмотров с точкой отсчета
+    function processBaseViews(namesArray) {
+      let baseViewsMap = {};
+      try {
+        baseViewsMap = JSON.parse(localStorage.getItem('ismlar_random_base_views') || '{}');
+      } catch(e) {}
+
+      let updated = false;
+      namesArray.forEach(item => {
+        if (baseViewsMap[item.id] === undefined) {
+          // Базовое число просмотров от 200 до 1200
+          baseViewsMap[item.id] = 200 + ((item.id * 37) % 1000);
+          updated = true;
+        }
+        item.randomBaseView = baseViewsMap[item.id];
+      });
+
+      if (updated) {
+        try {
+          localStorage.setItem('ismlar_random_base_views', JSON.stringify(baseViewsMap));
+        } catch(e) {}
+      }
+      return namesArray;
+    }
+
+    function getStoredUserViews() {
+      try {
+        return JSON.parse(localStorage.getItem('ismlar_views') || '{}');
+      } catch(e) {
+        return {};
+      }
+    }
+
+    function getTotalViews(item) {
+      const userViewsObj = getStoredUserViews();
+      const realExtra = userViewsObj[item.id] || 0;
+      const base = item.randomBaseView !== undefined ? item.randomBaseView : (item.v || 300);
+      return base + realExtra;
+    }
+
+    function recordView(itemId) {
+      let userViewsObj = getStoredUserViews();
+      userViewsObj[itemId] = (userViewsObj[itemId] || 0) + 1;
+      try {
+        localStorage.setItem('ismlar_views', JSON.stringify(userViewsObj));
+      } catch (e) {}
+
+      const item = getBaseNames().find(x => x.id === itemId);
+      if (item) {
+        const total = getTotalViews(item);
+        const badge = document.getElementById(`viewBadge_${itemId}`);
+        if (badge) badge.innerHTML = `👁️ ${total.toLocaleString()}`;
+        const top10Badge = document.getElementById(`top10ViewBadge_${itemId}`);
+        if (top10Badge) top10Badge.innerHTML = `👁️ ${total.toLocaleString()}`;
+      }
+    }
+
+    // Функция округления в меньшую сторону для статистики
+    function roundDownCount(n) {
+      if (n >= 10000) return Math.floor(n / 1000) * 1000;
+      if (n >= 1000) return Math.floor(n / 100) * 100;
+      if (n >= 100) return Math.floor(n / 50) * 50;
+      return Math.floor(n / 10) * 10;
+    }
+
+    function updateFooterStats() {
+      const all = getBaseNames();
+      const total = all.length;
+      const boys = all.filter(x => x.g === 'm').length;
+      const girls = all.filter(x => x.g === 'f').length;
+
+      const tEl = document.getElementById('statTotal');
+      const bEl = document.getElementById('statBoys');
+      const gEl = document.getElementById('statGirls');
+
+      if (tEl) tEl.textContent = roundDownCount(total).toLocaleString() + '+';
+      if (bEl) bEl.textContent = roundDownCount(boys).toLocaleString() + '+';
+      if (gEl) gEl.textContent = roundDownCount(girls).toLocaleString() + '+';
+    }
+
     function checkUrlParams() {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -752,6 +866,9 @@
     }
 
     function refreshDataOnScreen() {
+      window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
+      updateFooterStats();
+
       if (document.getElementById('catalogArea').style.display === 'block') {
         if (state.activeLetter) {
           window.selectLetter(state.activeLetter);
@@ -977,8 +1094,10 @@
     };
 
     function createNameAccordionElement(item) {
+      window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
       const primaryName = item.l || '';
       const isFav = state.favorites.some(f => f.id === item.id);
+      const totalViews = getTotalViews(item);
       const wrap = document.createElement('div');
       wrap.className = 'name-accordion-item';
 
@@ -994,7 +1113,7 @@
             <strong class="name-primary">${primaryName}</strong>
           </div>
           <div class="accordion-right">
-            <span class="view-badge">👁️ ${(item.v || 100).toLocaleString()}</span>
+            <span class="view-badge" id="viewBadge_${item.id}">👁️ ${totalViews.toLocaleString()}</span>
             <span>▼</span>
           </div>
         </div>
@@ -1015,30 +1134,44 @@
         window.toggleFavorite(item.id);
       });
 
-      wrap.querySelector('.accordion-header').addEventListener('click', () => {
-        wrap.classList.toggle('open');
+      const headerEl = wrap.querySelector('.accordion-header');
+      headerEl.addEventListener('click', () => {
+        const isOpen = wrap.classList.toggle('open');
+        if (isOpen) {
+          recordView(item.id);
+        }
       });
 
       return wrap;
     }
 
     function renderTop10() {
+      window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
       const grid = document.getElementById('top10Grid');
       if (!grid) return;
       grid.innerHTML = '';
 
-      const list = getBaseNames().filter(x => x.g === state.gender).slice(0, 10);
-      list.forEach((item, index) => {
+      const filtered = getBaseNames().filter(x => x.g === state.gender);
+      // Сортировка по общему количеству просмотров
+      filtered.sort((a, b) => getTotalViews(b) - getTotalViews(a));
+
+      filtered.slice(0, 10).forEach((item, index) => {
+        const totalViews = getTotalViews(item);
         const card = document.createElement('div');
         card.className = `top10-card rank-${index + 1}`;
         card.innerHTML = `
           <div class="top10-row-top">
             <span class="rank-badge">#${index + 1}</span>
-            <span class="view-badge">👁️ ${(item.v || 100).toLocaleString()}</span>
+            <span class="view-badge" id="top10ViewBadge_${item.id}">👁️ ${totalViews.toLocaleString()}</span>
           </div>
           <div class="top10-name-text">${item.l}</div>
           <div class="top10-meaning-preview">${item.m || ''}</div>
         `;
+
+        card.addEventListener('click', () => {
+          recordView(item.id);
+        });
+
         grid.appendChild(card);
       });
     }
@@ -1065,6 +1198,9 @@
     }
 
     function init() {
+      window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
+      updateFooterStats();
+
       try {
         const raw = localStorage.getItem('ismlar_favorites_v2');
         if (raw) state.favorites = JSON.parse(raw);
