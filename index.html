@@ -398,7 +398,6 @@
     }
     body.gender-f .card-meaning-text { border-left-color: var(--girl-color); }
 
-    /* Стили для блока похожих имен внутри карточки */
     .similar-names-block {
       margin-top: 12px;
       padding-top: 10px;
@@ -781,6 +780,7 @@
   (function () {
     'use strict';
 
+    // Строгий порядок Топ-10 по вашему списку
     const TOP_BOYS_NAMES = ["Muhammad", "Mustafo", "Imron", "Ali", "Umar", "Zubayr", "Zayd", "Ayub", "Jahongir", "Yusuf"];
     const TOP_GIRLS_NAMES = ["Sadiya", "Safiya", "Maryam", "Oyisha", "Aziza", "Muslima", "Mubina", "Hadicha", "Sumayya", "Imona"];
 
@@ -831,6 +831,7 @@
         : CORE_NAMES;
     }
 
+    // Генерация уникальных просмотров от 2000 до 3000, где индекс 0 (#1) ближе к 3000, а индекс 9 (#10) ближе к 2000
     function processBaseViews(namesArray) {
       let baseViewsMap = {};
       try {
@@ -1185,7 +1186,6 @@
       });
     };
 
-    // АЛГОРИТМ ПОДБОРА ПОХОЖИХ ИМЕН (с учетом совпадения корня и порядка букв)
     function getSimilarNames(currentItem, allNamesList, limit = 3) {
       if (!allNamesList || !Array.isArray(allNamesList)) return [];
       
@@ -1199,25 +1199,18 @@
         let score = 0;
         const nameNorm = normalizeStr(item.l);
 
-        // 1. Совпадение корня / порядка букв (вхождение одного в другое, например Muhammad и Muhammadali)
         if (nameNorm.includes(currentNameNorm) || currentNameNorm.includes(nameNorm)) {
           score += 10;
         }
 
-        // 2. Совпадение префикса (начала имени, первые 3 буквы)
         if (currentNameNorm.length >= 3 && nameNorm.length >= 3) {
           if (nameNorm.slice(0, 3) === currentNameNorm.slice(0, 3)) {
             score += 5;
           }
         }
 
-        // 3. Совпадение по происхождению (языку)
         if (item.lang === currentLang) score += 3;
-
-        // 4. Первая буква
         if (nameNorm[0] === currentNameNorm[0]) score += 2;
-
-        // 5. Близкая длина
         if (Math.abs(nameNorm.length - currentNameNorm.length) <= 2) score += 2;
 
         return { item, score };
@@ -1227,22 +1220,18 @@
       return scored.slice(0, limit).map(x => x.item);
     }
 
-    // Клик по похожему имени в карточке — открывает его или прокручивает
     window.selectSpecificName = function(itemId) {
       const all = getBaseNames();
       const target = all.find(x => x.id === itemId);
       if (!target) return;
 
-      // Закрываем модалки если открыты
       window.closeSearchModal();
       window.closeFavoritesModal();
 
-      // Выбираем правильный пол и показываем букву
       window.selectGender(target.g);
       const firstLetter = target.l[0].toUpperCase();
       window.selectLetter(firstLetter);
 
-      // Находим элемент вDOM и разворачиваем его
       setTimeout(() => {
         const items = document.querySelectorAll('.name-accordion-item');
         items.forEach(el => {
@@ -1269,7 +1258,6 @@
       const shareText = `👶 ${primaryName} — ${item.m || ''}\n\nManba: Bolagaism.uz`;
       const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(shareText)}`;
 
-      // Получаем похожие имена
       const similarItems = getSimilarNames(item, getBaseNames(), 3);
       let similarHtml = '';
       if (similarItems.length > 0) {
@@ -1325,6 +1313,7 @@
       return wrap;
     }
 
+    // Рендеринг Топ-10 строго в заданном вами порядке с уникальными просмотрами (от 2000 до 3000)
     function renderTop10() {
       window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
       const grid = document.getElementById('top10Grid');
@@ -1340,8 +1329,6 @@
           topItems.push(found);
         }
       });
-
-      topItems.sort((a, b) => getTotalViews(b) - getTotalViews(a));
 
       topItems.forEach((item, index) => {
         const totalViews = getTotalViews(item);
