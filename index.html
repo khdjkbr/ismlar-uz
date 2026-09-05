@@ -333,6 +333,42 @@
     }
     body.gender-f .active-letter-bubble { background: var(--girl-color); }
 
+    /* Элементы сворачивания общего списка */
+    .collapsible-toggle-btn {
+      width: 100%;
+      background: #FAF7F2;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+      margin-bottom: 14px;
+    }
+    .collapsible-toggle-btn:hover {
+      background: var(--boy-bg);
+      border-color: var(--boy-color);
+      color: var(--boy-color);
+    }
+    body.gender-f .collapsible-toggle-btn:hover {
+      background: var(--girl-bg);
+      border-color: var(--girl-color);
+      color: var(--girl-color);
+    }
+
+    .collapsible-content {
+      display: none;
+    }
+    .collapsible-content.expanded {
+      display: block;
+    }
+
     .names-accordion-list { display: flex; flex-direction: column; gap: 10px; }
 
     .name-accordion-item {
@@ -619,10 +655,10 @@
       </div>
     </section>
 
-    <!-- 3: KATALOG -->
+    <!-- 3: KATALOG (Прежний порядок: Алфавит ➔ Все имена ➔ Топ-10) -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- ALIFBO -->
+      <!-- 1. ALIFBO -->
       <section class="section-alphabet">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -633,7 +669,30 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- TOP 10 -->
+      <!-- 2. BARCHA ISMLAR RO'YXATI (Сворачиваемый при общем показе) -->
+      <section class="section-letter-names">
+        <button type="button" class="collapsible-toggle-btn" id="collapsibleToggleBtn" onclick="window.toggleAllNamesList()">
+          <span id="collapsibleBtnText">📂 Barcha ismlar ro'yxatini ko'rsatish</span>
+          <span id="collapsibleBtnArrow">▼</span>
+        </button>
+
+        <div class="collapsible-content" id="collapsibleContent">
+          <div class="letter-results-header">
+            <div class="letter-title-badge">
+              <span class="active-letter-bubble" id="activeLetterBubble">★</span>
+              <div>
+                <h3 class="letter-res-title" id="letterResultsTitle">Ismlar ro'yxati</h3>
+                <p class="letter-res-count" id="letterResultsCount" style="font-size:0.8rem; color:var(--text-muted);">Yuklanmoqda...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="names-accordion-list" id="letterNamesList"></div>
+          <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
+        </div>
+      </section>
+
+      <!-- 3. TOP 10 -->
       <section class="section-top10">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -642,22 +701,6 @@
           <span class="rank-badge" id="top10GenderBadge">O'g'il bolalar uchun</span>
         </div>
         <div class="top10-grid" id="top10Grid"></div>
-      </section>
-
-      <!-- ISMLAR RO'YXATI -->
-      <section class="section-letter-names">
-        <div class="letter-results-header">
-          <div class="letter-title-badge">
-            <span class="active-letter-bubble" id="activeLetterBubble">★</span>
-            <div>
-              <h3 class="letter-res-title" id="letterResultsTitle">Ismlar ro'yxati</h3>
-              <p class="letter-res-count" id="letterResultsCount" style="font-size:0.8rem; color:var(--text-muted);">Yuklanmoqda...</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="names-accordion-list" id="letterNamesList"></div>
-        <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
       </section>
 
     </div>
@@ -776,7 +819,8 @@
     const state = {
       gender: 'm',
       activeLetter: null,
-      favorites: []
+      favorites: [],
+      isAllNamesExpanded: false // Флаг для сворачивания/разворачивания общего списка
     };
 
     function getBaseNames() {
@@ -951,6 +995,9 @@
     window.selectGender = function (gender) {
       state.gender = gender;
       state.activeLetter = null;
+      state.isAllNamesExpanded = false; // При выборе пола список сворачиваем по умолчанию
+      updateCollapsibleUI();
+
       document.body.classList.toggle('gender-m', gender === 'm');
       document.body.classList.toggle('gender-f', gender === 'f');
 
@@ -988,16 +1035,23 @@
         .trim();
     }
 
+    // При выборе конкретной буквы список автоматически разворачивается
     window.selectLetter = function (letter) {
       if (state.activeLetter === letter) {
         state.activeLetter = null;
         renderAlphabetBar();
+        state.isAllNamesExpanded = false;
+        updateCollapsibleUI();
         showAllNamesForGender();
         return;
       }
 
       state.activeLetter = letter;
       renderAlphabetBar();
+      
+      // Автоматически разворачиваем блок при клике на букву
+      state.isAllNamesExpanded = true;
+      updateCollapsibleUI();
 
       const normLetter = normalizeStr(letter);
 
@@ -1031,6 +1085,30 @@
 
       renderCurrentList();
     };
+
+    // Управление кнопкой сврота/разворота общего списка
+    window.toggleAllNamesList = function() {
+      state.isAllNamesExpanded = !state.isAllNamesExpanded;
+      updateCollapsibleUI();
+    };
+
+    function updateCollapsibleUI() {
+      const content = document.getElementById('collapsibleContent');
+      const btnText = document.getElementById('collapsibleBtnText');
+      const btnArrow = document.getElementById('collapsibleBtnArrow');
+
+      if (!content) return;
+
+      if (state.isAllNamesExpanded) {
+        content.classList.add('expanded');
+        if (btnText) btnText.textContent = "📂 Barcha ismlar ro'yxatini yopish";
+        if (btnArrow) btnArrow.textContent = "▲";
+      } else {
+        content.classList.remove('expanded');
+        if (btnText) btnText.textContent = "📂 Barcha ismlar ro'yxatini ko'rsatish";
+        if (btnArrow) btnArrow.textContent = "▼";
+      }
+    }
 
     function renderCurrentList() {
       const list = document.getElementById('letterNamesList');
@@ -1067,7 +1145,6 @@
       document.getElementById('modalSearch').style.display = 'none';
     };
 
-    // Исправленный живой поиск (поиск строго по имени)
     window.handleLiveSearch = function (query) {
       const q = normalizeStr(query);
       const badge = document.getElementById('liveSearchCountBadge');
