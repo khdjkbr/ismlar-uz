@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Главная страница -->
+  <url>
+    <loc>https://bolagaism.uz/</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Категории по полу -->
+  <url>
+    <loc>https://bolagaism.uz/?jins=m</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://bolagaism.uz/?jins=f</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Алфавитные разделы для мальчиков (O'g'il bolalar) -->
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=A</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=B</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=D</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=E</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=F</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=G</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=H</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=I</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=J</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=K</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=L</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=M</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=N</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=O</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=P</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=Q</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=R</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=S</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=T</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=U</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=V</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=X</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=Y</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=Z</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=O%27</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=G%27</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=Sh</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=m&amp;harf=Ch</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+
+  <!-- Алфавитные разделы для девочек (Qiz bolalar) -->
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=A</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=B</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=D</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=E</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=F</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=G</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=H</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=I</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=J</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=K</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=L</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=M</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=N</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=O</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=P</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=Q</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=R</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=S</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=T</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=U</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=V</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=X</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=Y</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=Z</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=O%27</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=G%27</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=Sh</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=Ch</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+</urlset>
