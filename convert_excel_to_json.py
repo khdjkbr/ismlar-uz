@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Skript: Excel bazasidagi ismlarni sayt uchun names_data.js va names_data.json ga o'girish.
-Qo'llab-quvvatlanadigan ustunlar:
-  - T/r (№, ID, Tartib raqami)
-  - Ism (Lotincha nom)
-  - Jinsi (Erkak / Ayol)
-  - Kelib chiqishi (Tili / Etimologiyasi)
-  - Ma'nosi (Izohi)
+Автоматическая конвертация базы имен uz_names.xlsx в names_data.js для сайта.
+Поддерживает структуру: T/r, Ism, Jinsi, Kelib chiqishi, Ma'nosi.
 """
 
 import sys
@@ -15,7 +10,6 @@ import os
 import json
 import pandas as pd
 
-# Boshlang'ich reyting uchun eng mashhur ismlar ko'rishlar soni
 POPULAR_SEEDS = {
     "Muhammad": 1850, "Madina": 1790, "Yasmina": 1640, "Fotima": 1510,
     "Rayhona": 1470, "Abdulaziz": 1420, "Oysha": 1420, "Imron": 1390,
@@ -54,17 +48,17 @@ def convert(excel_path=None, json_path="names_data.json", js_path="names_data.js
                 print("[-] Excel (.xlsx) fayl topilmadi.")
                 return 1
 
-    print(f"[+] Excel fayli yuklanmoqda: {excel_path}...")
+    print(f"[+] Excel yuklanmoqda: {excel_path}...")
     try:
         df_raw = pd.read_excel(excel_path, header=None)
     except Exception as e:
-        print(f"[-] Faylni o'qishda xatolik: {e}")
+        print(f"[-] Xatolik: {e}")
         return 1
 
     header_idx = None
     for idx, row in df_raw.iterrows():
         row_str = " ".join([str(x) for x in row.values if pd.notna(x)]).lower()
-        if "ism" in row_str or "jinsi" in row_str or "kelib chiqishi" in row_str or "маъно" in row_str:
+        if "ism" in row_str or "jinsi" in row_str or "kelib chiqishi" in row_str or "ma'no" in row_str:
             header_idx = idx
             break
 
@@ -127,21 +121,21 @@ def convert(excel_path=None, json_path="names_data.json", js_path="names_data.js
         current_id += 1
 
     if not items:
-        print("[-] Jadvaldan hech qanday ism topilmadi.")
+        print("[-] Ismlar topilmadi.")
         return 1
 
+    # Saqlash
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, indent=2)
-    print(f"[+] JSON bazasi saqlandi: {json_path} ({len(items)} ta ism)")
 
     with open(js_path, "w", encoding="utf-8") as f:
         f.write("window.ALL_NAMES = ")
         json.dump(items, f, ensure_ascii=False)
         f.write(";\n")
-    print(f"[+] Sayt JS bazasi saqlandi: {js_path} ({os.path.getsize(js_path) / 1024:.1f} KB)")
 
+    print(f"[+] Muvaffaqiyatli! {len(items)} ta ism names_data.js ga saqlandi.")
     return 0
 
 if __name__ == "__main__":
-    target_file = sys.argv if len(sys.argv) > 1 else None
-    sys.exit(convert(target_file))
+    target = sys.argv if len(sys.argv) > 1 else None
+    sys.exit(convert(target))
