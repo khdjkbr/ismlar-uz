@@ -494,20 +494,20 @@
     .search-modal-box { flex-grow: 1; display: flex; align-items: center; background: #FFFFFF; border: 1.5px solid var(--border-light); border-radius: var(--radius-full); padding: 0 14px; }
     #modalSearchInput { width: 100%; border: none; background: transparent; padding: 10px 0; font-family: var(--font-body); font-size: 1rem; outline: none; }
 
-    /* Стили для нового блока статистики в футере */
+    /* Блок статистики имён с увеличенным на 2pt шрифтом (~1.02rem) */
     .footer-stats-box {
       background: rgba(235, 228, 218, 0.5);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
-      padding: 12px 16px;
+      padding: 12px 18px;
       margin: 0 auto 14px auto;
-      max-width: 620px;
+      max-width: 720px;
       display: flex;
       justify-content: center;
       align-items: center;
       flex-wrap: wrap;
       gap: 16px;
-      font-size: 0.88rem;
+      font-size: 1.02rem;
       font-weight: 600;
       color: var(--text-main);
     }
@@ -665,22 +665,22 @@
         Farzandingiz uchun eng chiroyli, jarangdor va manoli ozbek ismlari toliq katalogi.
       </p>
 
-      <!-- Новый блок статистики с округленными значениями и значками -->
+      <!-- Блок статистики с обновленными названиями и увеличенным шрифтом (+2pt) -->
       <div class="footer-stats-box" id="footerStatsBox">
-        <span class="stat-item">📚 Bazada: <b id="statTotal">1,000+</b></span>
-        <span class="stat-item">👦 Ogil: <b id="statBoys">600+</b></span>
-        <span class="stat-item">👧 Qiz: <b id="statGirls">400+</b></span>
+        <span class="stat-item">📚 Jami ismlar soni: <b id="statTotal">1,000+</b></span>
+        <span class="stat-item">👦 O'g'il bolalar ismi: <b id="statBoys">600+</b></span>
+        <span class="stat-item">👧 Qiz bolalar ismi: <b id="statGirls">400+</b></span>
       </div>
 
-      <!-- Кнопки в футере: Bog'lanish и Foydalanish shartlari поменяны местами -->
+      <!-- Кнопки в футере: Foydalanish shartlari и Bog'lanish поменяны местами -->
       <div class="footer-links">
         <a href="about.html">Biz haqimizda</a>
         <span>•</span>
-        <a href="terms.html">Foydalanish shartlari</a>
+        <a href="contact.html">Bog'lanish</a>
         <span>•</span>
         <a href="privacy.html">Maxfiylik siyosati</a>
         <span>•</span>
-        <a href="contact.html">Bog'lanish</a>
+        <a href="terms.html">Foydalanish shartlari</a>
       </div>
 
       <div class="footer-bottom-row">
@@ -768,7 +768,6 @@
         : CORE_NAMES;
     }
 
-    // Генерация и сохранение рандомных базовых просмотров с точкой отсчета
     function processBaseViews(namesArray) {
       let baseViewsMap = {};
       try {
@@ -778,7 +777,6 @@
       let updated = false;
       namesArray.forEach(item => {
         if (baseViewsMap[item.id] === undefined) {
-          // Базовое число просмотров от 200 до 1200
           baseViewsMap[item.id] = 200 + ((item.id * 37) % 1000);
           updated = true;
         }
@@ -825,7 +823,6 @@
       }
     }
 
-    // Функция округления в меньшую сторону для статистики
     function roundDownCount(n) {
       if (n >= 10000) return Math.floor(n / 1000) * 1000;
       if (n >= 1000) return Math.floor(n / 100) * 100;
@@ -1152,7 +1149,6 @@
       grid.innerHTML = '';
 
       const filtered = getBaseNames().filter(x => x.g === state.gender);
-      // Сортировка по общему количеству просмотров
       filtered.sort((a, b) => getTotalViews(b) - getTotalViews(a));
 
       filtered.slice(0, 10).forEach((item, index) => {
