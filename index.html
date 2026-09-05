@@ -633,7 +633,7 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- TOP 10 -->
+      <!-- TOP 10 (РАСПОЛОЖЕНО НАД СПИСКОМ ВСЕХ ИМЕН) -->
       <section class="section-top10">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -1067,6 +1067,7 @@
       document.getElementById('modalSearch').style.display = 'none';
     };
 
+    // ИСПРАВЛЕННЫЙ ЖИВОЙ ПОИСК (строго по началу или вхождению в имя, без описаний)
     window.handleLiveSearch = function (query) {
       const q = normalizeStr(query);
       const badge = document.getElementById('liveSearchCountBadge');
@@ -1081,7 +1082,19 @@
       }
 
       const matches = getBaseNames().filter(item => {
-        return normalizeStr(item.l).includes(q) || normalizeStr(item.m).includes(q);
+        const normName = normalizeStr(item.l);
+        return normName.startsWith(q) || normName.includes(q);
+      });
+
+      // Сортировка: совпадения по началу имени показываются первыми
+      matches.sort((a, b) => {
+        const nameA = normalizeStr(a.l);
+        const nameB = normalizeStr(b.l);
+        const startsA = nameA.startsWith(q);
+        const startsB = nameB.startsWith(q);
+        if (startsA && !startsB) return -1;
+        if (!startsA && startsB) return 1;
+        return nameA.localeCompare(nameB);
       });
 
       if (badge) {
@@ -1090,7 +1103,11 @@
       }
 
       list.innerHTML = '';
-      matches.slice(0, 50).forEach(item => list.appendChild(createNameAccordionElement(item)));
+      if (matches.length === 0) {
+        list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">Bunday ism topilmadi</div>`;
+      } else {
+        matches.slice(0, 50).forEach(item => list.appendChild(createNameAccordionElement(item)));
+      }
     };
 
     window.openFavoritesModal = function () {
