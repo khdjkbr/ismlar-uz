@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -21,8 +21,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,17 +32,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas openpyxl
 
-      - name: Convert Excel to names_data.js
+      - name: Convert Excel to names.json and names_data.js
         run: |
           python convert_excel_to_json.py
-
-      - name: Commit names_data.js back to repository
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add names_data.js || true
-          git commit -m "Auto-generate names_data.js from Excel [skip ci]" || echo "No changes to commit"
-          git push origin main || echo "Nothing to push"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
