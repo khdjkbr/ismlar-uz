@@ -548,7 +548,6 @@
 
   <main class="main-content container" style="margin-top: 20px;">
 
-    <!-- 1: WELCOME -->
     <section class="wizard-step" id="stepWelcome">
       <div class="welcome-card">
         <div class="baby-illustration">👶✨</div>
@@ -563,7 +562,6 @@
       </div>
     </section>
 
-    <!-- 2: JINS TANLASH -->
     <section class="wizard-step" id="stepGender" style="display: none;">
       <div class="step-card">
         <h2 class="step-title">Farzandingiz jinsini tanlang</h2>
@@ -585,10 +583,8 @@
       </div>
     </section>
 
-    <!-- 3: KATALOG -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- ALIFBO -->
       <section class="section-alphabet">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -599,7 +595,6 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- ISMLAR ROYXATI -->
       <section class="section-letter-names">
         <div class="letter-results-header">
           <div class="letter-title-badge">
@@ -615,7 +610,6 @@
         <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana korsatish (50 ta)</button>
       </section>
 
-      <!-- TOP 10 -->
       <section class="section-top10">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -646,7 +640,6 @@
     </div>
   </footer>
 
-  <!-- QIDIRUV -->
   <div class="modal-overlay" id="modalSearch">
     <div class="modal-window modal-search-window">
       <div class="modal-search-header">
@@ -663,7 +656,6 @@
     </div>
   </div>
 
-  <!-- TANLANGANLAR -->
   <div class="modal-overlay" id="modalFavorites">
     <div class="modal-window">
       <div class="modal-header">
@@ -683,7 +675,7 @@
   (function () {
     'use strict';
 
-    // Boshlangich kafolatlangan ismlar bazasi (sof lotincha)
+    // Boshlangich kafolatlangan zaxira (faqat lotincha)
     const CORE_NAMES = [
       {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va ezoz sohibining, yani Allohning quli.", v:1420},
       {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
@@ -702,16 +694,14 @@
       {id:15, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushboy va dilkash qiz.", v:1470}
     ];
 
-    if (!window.ALL_NAMES || !Array.isArray(window.ALL_NAMES) || window.ALL_NAMES.length === 0) {
-      window.ALL_NAMES = CORE_NAMES;
-    }
+    window.ALL_NAMES = CORE_NAMES;
 
-    // Exceldan yaratilgan names_data.js faylini xavfsiz yuklash
-    (function loadExternalData() {
-      const script = document.createElement('script');
-      script.src = 'names_data.js?v=' + Date.now();
-      script.onload = function() {
-        if (window.ALL_NAMES && window.ALL_NAMES.length > 50) {
+    // Exceldan olingan bazani sahifani bloklamasdan dinamik yuklash
+    (function loadDataAsync() {
+      const s = document.createElement('script');
+      s.src = 'names_data.js?t=' + new Date().getTime();
+      s.onload = function() {
+        if (window.ALL_NAMES && window.ALL_NAMES.length > 20) {
           if (document.getElementById('catalogArea').style.display === 'block') {
             if (state.activeLetter) {
               window.selectLetter(state.activeLetter);
@@ -722,7 +712,7 @@
           }
         }
       };
-      document.head.appendChild(script);
+      document.body.appendChild(s);
     })();
 
     const LATIN_ALPHABET = [
