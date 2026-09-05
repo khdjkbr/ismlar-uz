@@ -6,6 +6,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
   <title>Bolagaism.uz — Ozbek ismlari manosi toliq katalogi</title>
   <meta name="description" content="Ozbek ismlari manosi, kelib chiqishi va toliq izohi. Farzandingiz uchun eng chiroyli ismlar katalogi.">
+  <link rel="canonical" href="https://bolagaism.uz/">
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -128,7 +129,6 @@
       gap: 8px;
     }
 
-    /* Одинаковая фиксированная высота для обеих кнопок */
     .header-search-btn {
       background: var(--card-bg);
       border: 1px solid var(--border-light);
@@ -516,7 +516,7 @@
   <header class="sticky-header">
     <div class="header-container">
       <div class="brand-row">
-        <a href="#" class="brand-logo" id="logoLink">
+        <a href="https://bolagaism.uz/" class="brand-logo" id="logoLink">
           <span class="logo-icon">🍼</span>
           <span class="logo-text">BolagaIsm<span class="logo-tld">.uz</span></span>
         </a>
@@ -650,7 +650,7 @@
     </div>
   </div>
 
-  <!-- TANLANGANLAR (Модальное окно сохранено без изменений) -->
+  <!-- TANLANGANLAR -->
   <div class="modal-overlay" id="modalFavorites">
     <div class="modal-window">
       <div class="modal-header">
@@ -711,6 +711,23 @@
         : CORE_NAMES;
     }
 
+    function checkUrlParams() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const jinsParam = params.get('jins');
+        const harfParam = params.get('harf');
+
+        if (jinsParam === 'm' || jinsParam === 'f') {
+          window.selectGender(jinsParam);
+          if (harfParam) {
+            setTimeout(() => {
+              window.selectLetter(decodeURIComponent(harfParam));
+            }, 100);
+          }
+        }
+      } catch (e) {}
+    }
+
     function refreshDataOnScreen() {
       if (document.getElementById('catalogArea').style.display === 'block') {
         if (state.activeLetter) {
@@ -719,6 +736,8 @@
           showAllNamesForGender();
         }
         renderTop10();
+      } else {
+        checkUrlParams();
       }
     }
 
@@ -1030,15 +1049,8 @@
         if (badge) badge.textContent = state.favorites.length;
       } catch (e) {}
 
-      const logo = document.getElementById('logoLink');
-      if (logo) {
-        logo.addEventListener('click', (e) => {
-          e.preventDefault();
-          showStep('welcome');
-        });
-      }
-
       showStep('welcome');
+      checkUrlParams();
     }
 
     if (document.readyState === 'loading') {
