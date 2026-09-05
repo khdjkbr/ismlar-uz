@@ -128,12 +128,13 @@
       gap: 8px;
     }
 
+    /* Одинаковая фиксированная высота для обеих кнопок */
     .header-search-btn {
       background: var(--card-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-full);
-      width: 38px;
       height: 38px;
+      width: 38px;
       font-size: 1.1rem;
       color: var(--text-main);
       cursor: pointer;
@@ -143,6 +144,7 @@
       box-shadow: var(--shadow-sm);
       transition: all 0.2s;
       flex-shrink: 0;
+      padding: 0;
     }
 
     .header-search-btn:hover {
@@ -155,9 +157,8 @@
       background: var(--card-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-full);
-      padding: 6px 14px;
-      font-size: 0.85rem;
-      font-weight: 700;
+      height: 38px;
+      padding: 0 12px;
       color: var(--text-main);
       cursor: pointer;
       display: inline-flex;
@@ -165,6 +166,7 @@
       gap: 6px;
       box-shadow: var(--shadow-sm);
       transition: all 0.2s;
+      flex-shrink: 0;
     }
 
     .header-fav-btn:hover {
@@ -177,10 +179,12 @@
       background: #E26A8D;
       color: #FFFFFF;
       font-size: 0.72rem;
-      padding: 1px 7px;
+      font-weight: 700;
+      padding: 2px 7px;
       border-radius: var(--radius-full);
       min-width: 18px;
       text-align: center;
+      line-height: 1.2;
     }
 
     .welcome-card, .step-card {
@@ -521,8 +525,7 @@
             <span>🔍</span>
           </button>
           <button type="button" class="header-fav-btn" onclick="window.openFavoritesModal()" title="Tanlangan ismlar">
-            <span class="fav-icon">❤️</span>
-            <span class="fav-label">Tanlangan</span>
+            <span style="font-size: 1.05rem; line-height: 1;">❤️</span>
             <span class="fav-counter-badge" id="favHeaderBadge">0</span>
           </button>
         </div>
@@ -647,7 +650,7 @@
     </div>
   </div>
 
-  <!-- TANLANGANLAR -->
+  <!-- TANLANGANLAR (Модальное окно сохранено без изменений) -->
   <div class="modal-overlay" id="modalFavorites">
     <div class="modal-window">
       <div class="modal-header">
@@ -667,7 +670,6 @@
   (function () {
     'use strict';
 
-    // Boshlang'ich zaxira
     const CORE_NAMES = [
       {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va ezoz sohibining, yani Allohning quli.", v:1420},
       {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
@@ -720,7 +722,6 @@
       }
     }
 
-    // 1. Direct fetch names.json
     fetch('names.json?t=' + Date.now())
       .then(res => {
         if (!res.ok) throw new Error("names.json topilmadi");
@@ -733,7 +734,6 @@
         }
       })
       .catch(() => {
-        // 2. Fallback to names_data.js
         const s = document.createElement('script');
         s.src = 'names_data.js?t=' + Date.now();
         s.onload = function() {
