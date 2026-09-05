@@ -4,17 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍼</text></svg>">
-  <title>Bolagaism.uz — O'zbek ismlari ma'nosi to'liq katalogi</title>
-  <meta name="description" content="O'zbek ismlari ma'nosi, kelib chiqishi va to'liq izohi. Farzandingiz uchun eng chiroyli ismlar katalogi.">
+  <title>Bolagaism.uz — Ozbek ismlari manosi toliq katalogi</title>
+  <meta name="description" content="Ozbek ismlari manosi, kelib chiqishi va toliq izohi. Farzandingiz uchun eng chiroyli ismlar katalogi.">
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Подключение сгенерированной базы -->
-  <script src="names_data.js"></script>
 
   <style>
     :root {
@@ -551,13 +548,13 @@
 
   <main class="main-content container" style="margin-top: 20px;">
 
-    <!-- ШАГ 1: ПРИВЕТСТВИЕ -->
+    <!-- 1: WELCOME -->
     <section class="wizard-step" id="stepWelcome">
       <div class="welcome-card">
         <div class="baby-illustration">👶✨</div>
-        <h1 class="welcome-title">Farzandingiz uchun eng chiroyli va ma'noli ismni tanlang</h1>
+        <h1 class="welcome-title">Farzandingiz uchun eng chiroyli va manoli ismni tanlang</h1>
         <p class="welcome-desc">
-          O'zbek xalq ismlarining to'liq ma'nosi, kelib chiqishi va izohi.
+          Ozbek xalq ismlarining toliq manosi, kelib chiqishi va izohi.
         </p>
         <button type="button" class="btn-start-choice" onclick="window.startChoosing()">
           <span>Ism tanlashni boshlash</span>
@@ -566,65 +563,65 @@
       </div>
     </section>
 
-    <!-- ШАГ 2: ВЫБОР ПОЛА -->
+    <!-- 2: JINS TANLASH -->
     <section class="wizard-step" id="stepGender" style="display: none;">
       <div class="step-card">
         <h2 class="step-title">Farzandingiz jinsini tanlang</h2>
-        <p class="step-desc">Tanlovingizga ko'ra mos ismlar saralab beriladi</p>
+        <p class="step-desc">Tanlovingizga kora mos ismlar saralab beriladi</p>
 
         <div class="gender-choice-grid">
           <button type="button" class="gender-card-btn boy" onclick="window.selectGender('m')">
             <span class="gender-avatar">👦</span>
-            <span class="gender-title">O'g'il bola</span>
+            <span class="gender-title">Ogil bola</span>
             <span class="gender-sub">Jasur, mard, baxtli</span>
           </button>
           
           <button type="button" class="gender-card-btn girl" onclick="window.selectGender('f')">
             <span class="gender-avatar">👧</span>
             <span class="gender-title">Qiz bola</span>
-            <span class="gender-sub">Go'zal, latofatli, oqila</span>
+            <span class="gender-sub">Gozal, latofatli, oqila</span>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- ШАГ 3: КАТАЛОГ -->
+    <!-- 3: KATALOG -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- АЛФАВИТ -->
+      <!-- ALIFBO -->
       <section class="section-alphabet">
         <div class="section-header-row">
           <h2 class="section-heading">
-            <span>🔤</span> <span>Harf bo'yicha ismlar</span>
+            <span>🔤</span> <span>Harf boyicha ismlar</span>
           </h2>
           <span class="heading-sub">Bosh harfni tanlang:</span>
         </div>
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- СПИСОК ИМЁН -->
+      <!-- ISMLAR ROYXATI -->
       <section class="section-letter-names">
         <div class="letter-results-header">
           <div class="letter-title-badge">
             <span class="active-letter-bubble" id="activeLetterBubble">★</span>
             <div>
-              <h3 class="letter-res-title" id="letterResultsTitle">Ismlar ro'yxati</h3>
+              <h3 class="letter-res-title" id="letterResultsTitle">Ismlar royxati</h3>
               <p class="letter-res-count" id="letterResultsCount" style="font-size:0.8rem; color:var(--text-muted);">Yuklanmoqda...</p>
             </div>
           </div>
         </div>
 
         <div class="names-accordion-list" id="letterNamesList"></div>
-        <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
+        <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana korsatish (50 ta)</button>
       </section>
 
-      <!-- ТОП 10 -->
+      <!-- TOP 10 -->
       <section class="section-top10">
         <div class="section-header-row">
           <h2 class="section-heading">
-            <span>⭐</span> <span>Eng ko'p ko'rilgan 10 ta ism</span>
+            <span>⭐</span> <span>Eng kop korilgan 10 ta ism</span>
           </h2>
-          <span class="rank-badge" id="top10GenderBadge">O'g'il bolalar uchun</span>
+          <span class="rank-badge" id="top10GenderBadge">Ogil bolalar uchun</span>
         </div>
         <div class="top10-grid" id="top10Grid"></div>
       </section>
@@ -640,7 +637,7 @@
         <strong>Bolagaism.uz</strong>
       </div>
       <p class="footer-desc">
-        Farzandingiz uchun eng chiroyli, jarangdor va ma'noli o'zbek ismlari to'liq katalogi.
+        Farzandingiz uchun eng chiroyli, jarangdor va manoli ozbek ismlari toliq katalogi.
       </p>
       <div class="footer-bottom-row">
         <span>© 2026 Bolagaism.uz — Barcha huquqlar himoyalangan.</span>
@@ -649,7 +646,7 @@
     </div>
   </footer>
 
-  <!-- ОКНО ПОИСКА -->
+  <!-- QIDIRUV -->
   <div class="modal-overlay" id="modalSearch">
     <div class="modal-window modal-search-window">
       <div class="modal-search-header">
@@ -666,7 +663,7 @@
     </div>
   </div>
 
-  <!-- ОКНО ИЗБРАННОГО -->
+  <!-- TANLANGANLAR -->
   <div class="modal-overlay" id="modalFavorites">
     <div class="modal-window">
       <div class="modal-header">
@@ -686,10 +683,52 @@
   (function () {
     'use strict';
 
+    // Boshlangich kafolatlangan ismlar bazasi (sof lotincha)
+    const CORE_NAMES = [
+      {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va ezoz sohibining, yani Allohning quli.", v:1420},
+      {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Paygambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
+      {id:3, l:"Alisher", g:"m", lang:"Arabcha / Forscha", m:"Sherdek jasur, dovyurak bolib ossin va hazrati Ali qollab yursin.", v:1280},
+      {id:4, l:"Amirxon", g:"m", lang:"Ozbekcha", m:"Hokim, yolboshchi; yuksak martabali, ezozli ogil.", v:980},
+      {id:5, l:"Behroz", g:"m", lang:"Forscha", m:"Baxtli, saodatli kunda tugilgan bola.", v:1120},
+      {id:6, l:"Javohir", g:"m", lang:"Arabcha", m:"Qimmatbaho toshlar; bebaho, qimmatli farzand.", v:1150},
+      {id:7, l:"Sardor", g:"m", lang:"Forscha", m:"Yetakchi, boshliq, rahbar; lashkarboshi.", v:940},
+      {id:8, l:"Sherzod", g:"m", lang:"Forscha", m:"Sher bolasi, dovyurak, jasurlar avlodiga mansub ogil.", v:870},
+      {id:9, l:"Temur", g:"m", lang:"Ozbekcha", m:"Temirdek mustahkam, mahkam, chidamli, umri uzoq bola.", v:1050},
+      {id:10, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr koruvchi, obodlik ramzi.", v:1390},
+      {id:11, l:"Madina", g:"f", lang:"Arabcha", m:"Muqaddas ziyoratgoh Madina shahri nomidan olingan gozal qiz.", v:1790},
+      {id:12, l:"Zuhro", g:"f", lang:"Arabcha", m:"Cholpon yulduzidek porloq, ravshan va gozal qiz.", v:1350},
+      {id:13, l:"Yasmina", g:"f", lang:"Arabcha / Forscha", m:"Xushboy yosumin gulidek nafis, latofatli qiz.", v:1640},
+      {id:14, l:"Fotima", g:"f", lang:"Arabcha", m:"Paygambarimiz (s.a.v.)ning suyukli qizlarining muborak ismlari.", v:1510},
+      {id:15, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushboy va dilkash qiz.", v:1470}
+    ];
+
+    if (!window.ALL_NAMES || !Array.isArray(window.ALL_NAMES) || window.ALL_NAMES.length === 0) {
+      window.ALL_NAMES = CORE_NAMES;
+    }
+
+    // Exceldan yaratilgan names_data.js faylini xavfsiz yuklash
+    (function loadExternalData() {
+      const script = document.createElement('script');
+      script.src = 'names_data.js?v=' + Date.now();
+      script.onload = function() {
+        if (window.ALL_NAMES && window.ALL_NAMES.length > 50) {
+          if (document.getElementById('catalogArea').style.display === 'block') {
+            if (state.activeLetter) {
+              window.selectLetter(state.activeLetter);
+            } else {
+              showAllNamesForGender();
+            }
+            renderTop10();
+          }
+        }
+      };
+      document.head.appendChild(script);
+    })();
+
     const LATIN_ALPHABET = [
       'A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
       'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 
-      'V', 'X', 'Y', 'Z', 'Oʻ', 'Gʻ', 'Sh', 'Ch'
+      'V', 'X', 'Y', 'Z', "O'", "G'", 'Sh', 'Ch'
     ];
 
     let currentRenderedList = [];
@@ -702,7 +741,9 @@
     };
 
     function getBaseNames() {
-      return (window.ALL_NAMES && Array.isArray(window.ALL_NAMES)) ? window.ALL_NAMES : [];
+      return (window.ALL_NAMES && Array.isArray(window.ALL_NAMES) && window.ALL_NAMES.length > 0) 
+        ? window.ALL_NAMES 
+        : CORE_NAMES;
     }
 
     window.startChoosing = function () {
@@ -717,7 +758,7 @@
 
       const badge = document.getElementById('top10GenderBadge');
       if (badge) {
-        badge.textContent = gender === 'm' ? "O'g'il bolalar uchun" : "Qiz bolalar uchun";
+        badge.textContent = gender === 'm' ? "Ogil bolalar uchun" : "Qiz bolalar uchun";
       }
 
       showStep('catalog');
@@ -736,7 +777,7 @@
       const count = document.getElementById('letterResultsCount');
 
       if (bubble) bubble.textContent = "★";
-      if (title) title.textContent = state.gender === 'm' ? "Barcha o'g'il bola ismlari" : "Barcha qiz bola ismlari";
+      if (title) title.textContent = state.gender === 'm' ? "Barcha ogil bola ismlari" : "Barcha qiz bola ismlari";
       if (count) count.textContent = `${all.length} ta ism topildi`;
 
       renderCurrentList();
@@ -802,7 +843,7 @@
       const visible = currentRenderedList.slice(0, currentLimit);
 
       if (visible.length === 0) {
-        list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);">Bu harf bo'yicha ismlar topilmadi</div>`;
+        list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);">Bu harf boyicha ismlar topilmadi</div>`;
         if (loadBtn) loadBtn.style.display = 'none';
         return;
       }
@@ -919,10 +960,10 @@
         </div>
         <div class="accordion-body">
           <div class="card-meta-tags">
-            <span class="meta-chip"><b>Kelib chiqishi:</b> ${item.lang || "O'zbekcha"}</span>
-            <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 O'g'il bola" : "👧 Qiz bola"}</span>
+            <span class="meta-chip"><b>Kelib chiqishi:</b> ${item.lang || "Ozbekcha"}</span>
+            <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 Ogil bola" : "👧 Qiz bola"}</span>
           </div>
-          <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>
+          <div class="card-meaning-text">${item.m || "Malumot kiritilmagan."}</div>
           <div class="card-share-block">
             <a href="${tgUrl}" target="_blank" class="share-action-btn tg">✈️ Telegramda ulashish</a>
           </div>
