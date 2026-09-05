@@ -7,16 +7,11 @@
   <title>Bolagaism.uz — O'zbek ismlari ma'nosi to'liq katalogi</title>
   <meta name="description" content="O'zbek ismlari ma'nosi, kelib chiqishi va to'liq izohi. Farzandingiz uchun eng chiroyli ismlar katalogi.">
   
-  <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- ПРЯМАЯ ЗАГРУЗКА БАЗЫ ДАННЫХ -->
-  <script src="names_data.js"></script>
 
   <style>
     :root {
@@ -471,7 +466,6 @@
     }
     .share-action-btn:hover { transform: translateY(-1px); }
     .share-action-btn.tg { background: #EBF5FB; color: #2481CC; border-color: #BEDDF4; }
-    .share-action-btn.wa { background: #EDF9F1; color: #25D366; border-color: #BDECCB; }
     .share-action-btn.copy { background: #F3EFE9; color: #554D44; }
 
     .top10-grid {
@@ -487,46 +481,6 @@
       border-radius: var(--radius-md);
       padding: 14px 16px;
       transition: all 0.2s;
-    }
-
-    .top10-card:hover {
-      border-color: var(--boy-color);
-      box-shadow: var(--shadow-sm);
-    }
-    body.gender-f .top10-card:hover { border-color: var(--girl-color); }
-
-    .top10-card-header {
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .top10-card.open {
-      background: #FFFFFF;
-      border-color: var(--boy-color);
-      box-shadow: var(--shadow-md);
-    }
-    body.gender-f .top10-card.open {
-      border-color: var(--girl-color);
-    }
-
-    .top10-chevron {
-      font-size: 0.75rem;
-      color: #9C9184;
-      transition: transform 0.25s ease;
-      display: inline-block;
-      margin-left: 2px;
-    }
-
-    .top10-card-body {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #F0EAE1;
-      animation: fadeInDown 0.25s ease;
-    }
-
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
     }
 
     .top10-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -566,7 +520,6 @@
       overflow: hidden;
       box-shadow: var(--shadow-lg);
     }
-    .modal-window.modal-sm { max-width: 380px; }
 
     .modal-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -582,7 +535,6 @@
 
     .modal-body-scroll { padding: 18px 20px; overflow-y: auto; }
     .fav-info-banner { background: #FFF9E6; padding: 10px 18px; font-size: 0.8rem; color: #7A5B0B; border-bottom: 1px solid #F5E5B8; }
-    .fav-expire-tag { font-size: 0.7rem; background: #FFF3D6; color: #8C6207; padding: 2px 7px; border-radius: var(--radius-full); }
     .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
     .empty-icon { font-size: 3rem; margin-bottom: 10px; }
 
@@ -596,9 +548,7 @@
     }
     .footer-desc { max-width: 520px; margin: 0 auto 14px; font-size: 0.88rem; }
     .footer-bottom-row { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid #EFE8DC; font-size: 0.78rem; }
-
-    .studio-link { color: inherit; text-decoration: none; transition: opacity 0.2s; }
-    .studio-link:hover { opacity: 0.8; text-decoration: underline; }
+    .studio-link { color: inherit; text-decoration: none; }
 
     .modal-search-window {
       max-width: 680px;
@@ -623,7 +573,6 @@
 
     .search-modal-box {
       flex-grow: 1;
-      position: relative;
       display: flex;
       align-items: center;
       background: #FFFFFF;
@@ -631,32 +580,15 @@
       border-radius: var(--radius-full);
       padding: 0 14px;
       box-shadow: var(--shadow-sm);
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .modal-search-icon {
-      margin-right: 8px;
-      font-size: 1.1rem;
-      color: var(--text-muted);
-    }
-
+    .modal-search-icon { margin-right: 8px; font-size: 1.1rem; color: var(--text-muted); }
     #modalSearchInput {
-      width: 100%;
-      border: none;
-      background: transparent;
-      padding: 10px 0;
-      font-family: var(--font-body);
-      font-size: 1rem;
-      color: var(--text-main);
-      outline: none;
+      width: 100%; border: none; background: transparent; padding: 10px 0;
+      font-family: var(--font-body); font-size: 1rem; color: var(--text-main); outline: none;
     }
 
-    .search-results-scroll {
-      padding: 18px 20px;
-      overflow-y: auto;
-      flex-grow: 1;
-      height: 100%;
-    }
+    .search-results-scroll { padding: 18px 20px; overflow-y: auto; flex-grow: 1; }
 
     .load-more-btn {
       width: 100%;
@@ -669,15 +601,11 @@
       cursor: pointer;
       color: var(--text-main);
       margin-top: 14px;
-      transition: all 0.2s;
     }
-    .load-more-btn:hover {
-      background: #F0EAE1;
-      border-color: var(--text-muted);
-    }
+    .load-more-btn:hover { background: #F0EAE1; }
 
     @media (max-width: 768px) {
-      .modal-search-window { height: 85vh; min-height: 85vh; }
+      .modal-search-window { height: 85vh; }
       .top10-grid, .gender-choice-grid { grid-template-columns: 1fr; }
       .letter-btn { flex: 1 0 calc(14.28% - 6px); height: 38px; font-size: 0.9rem; }
       .welcome-title, .step-title { font-size: 1.35rem; }
@@ -689,7 +617,6 @@
 
   <div class="baby-bg-pattern" aria-hidden="true"></div>
 
-  <!-- Закрепленная верхняя плашка -->
   <header class="sticky-header" id="stickyHeader">
     <div class="header-container">
       <div class="brand-row">
@@ -712,7 +639,6 @@
     </div>
   </header>
 
-  <!-- Верхний рекламный баннер -->
   <div class="ad-banner-wrap container">
     <div class="ad-placeholder banner-top">
       <span class="ad-tag">Reklama</span>
@@ -724,7 +650,6 @@
 
   <main class="main-content container">
 
-    <!-- ШАГ 1: ПРИВЕТСТВИЕ -->
     <section class="wizard-step step-welcome" id="stepWelcome">
       <div class="welcome-card">
         <div class="baby-illustration">👶✨</div>
@@ -743,7 +668,6 @@
       </div>
     </section>
 
-    <!-- ШАГ 2: ВЫБОР ПОЛА -->
     <section class="wizard-step step-gender" id="stepGender" style="display: none;">
       <div class="step-card">
         <h2 class="step-title">Farzandingiz jinsini tanlang</h2>
@@ -765,10 +689,8 @@
       </div>
     </section>
 
-    <!-- ШАГ 3: КАТАЛОГ -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- АЛФАВИТ -->
       <section class="section-alphabet" id="sectionAlphabet">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -779,13 +701,12 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- СПИСОК ИМЁН (АВТОМАТИЧЕСКИ ПОКАЗЫВАЕТСЯ СРАЗУ) -->
       <section class="section-letter-names" id="sectionLetterNames">
         <div class="letter-results-header">
           <div class="letter-title-badge">
-            <span class="active-letter-bubble" id="activeLetterBubble">A</span>
+            <span class="active-letter-bubble" id="activeLetterBubble">★</span>
             <div class="letter-text-box">
-              <h3 class="letter-res-title" id="letterResultsTitle">Barcha ismlar ro'yxati</h3>
+              <h3 class="letter-res-title" id="letterResultsTitle">Ismlar ro'yxati</h3>
               <p class="letter-res-count" id="letterResultsCount">Yuklanmoqda...</p>
             </div>
           </div>
@@ -795,7 +716,6 @@
         <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
       </section>
 
-      <!-- ТОП 10 -->
       <section class="section-top10" id="sectionTop10">
         <div class="section-header-row top10-header">
           <div class="top10-title-wrap">
@@ -835,7 +755,6 @@
     </div>
   </footer>
 
-  <!-- ОКНО ПОИСКА -->
   <div class="modal-overlay" id="modalSearch">
     <div class="modal-window modal-search-window">
       <div class="modal-search-header">
@@ -857,7 +776,6 @@
     </div>
   </div>
 
-  <!-- ОКНО ИЗБРАННОГО -->
   <div class="modal-overlay" id="modalFavorites">
     <div class="modal-window">
       <div class="modal-header">
@@ -884,7 +802,71 @@
   (function () {
     'use strict';
 
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    // Встроенная гарантийная база данных (работает при любых сетевых неполадках)
+    const CORE_NAMES = [
+      {id:1, l:"Abdulaziz", g:"m", lang:"Arabcha", m:"Izzat va e'zoz sohibining, ya'ni Allohning quli.", v:1420},
+      {id:2, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Payg'ambarimiz (s.a.v.)ning muborak ismlari.", v:1850},
+      {id:3, l:"Alisher", g:"m", lang:"Arabcha / Fors-tojikcha", m:"Sherdek jasur, dovyurak bo'lib o'ssin va hazrati Ali qo'llab yursin.", v:1280},
+      {id:4, l:"Amirxon", g:"m", lang:"Arabcha / O'zbekcha", m:"Hokim, yo'lboshchi; yuksak martabali, e'zozli o'g'il.", v:980},
+      {id:5, l:"Behro'z", g:"m", lang:"Fors-tojikcha", m:"Baxtli, saodatli kunda tug'ilgan bola.", v:1120},
+      {id:6, l:"Javohir", g:"m", lang:"Arabcha", m:"Qimmatbaho toshlar, javohirlar; bebaho, qimmatli farzand.", v:1150},
+      {id:7, l:"Sardor", g:"m", lang:"Fors-tojikcha", m:"Yetakchi, boshliq, rahbar; lashkarboshi, yo'lboshchi.", v:940},
+      {id:8, l:"Sherzod", g:"m", lang:"Fors-tojikcha", m:"Sher bolasi, dovyurak, jasurlar avlodiga mansub o'g'il.", v:870},
+      {id:9, l:"Temur", g:"m", lang:"O'zbekcha", m:"Temirdek mustahkam, mahkam, chidamli, umri uzoq bola.", v:1050},
+      {id:10, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr ko'ruvchi, obodlik ramzi.", v:1390},
+      {id:11, l:"Bilol", g:"m", lang:"Arabcha", m:"Yangi tuqqan oy (hilol) yoki chanqoqbosdi suvdek aziz bola.", v:920},
+      {id:12, l:"Davron", g:"m", lang:"Arabcha", m:"Davr sursin, umri shodon, baxtiyor o'tsin, tolei porloq bo'lsin.", v:780},
+      {id:13, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, go'zallik ramzi bo'lgan bola.", v:1360},
+      {id:14, l:"Ulug'bek", g:"m", lang:"O'zbekcha", m:"Buyuk hukmdor, buyuk sulton, beklarning eng ulug'i.", v:1120},
+      {id:15, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr ko'ruvchi, tabarruk va adolatli inson.", v:1250},
+      {id:16, l:"Rustam", g:"m", lang:"Fors-tojikcha", m:"Ulkan gavdali, kuchli, dovyurak bahodir, pahlavon.", v:960},
+      {id:17, l:"Sanjar", g:"m", lang:"Arabcha", m:"Shiddatli, o'tkir, kuchli, g'olib va muzaffar yigit.", v:820},
+      {id:18, l:"Oybek", g:"m", lang:"O'zbekcha", m:"Beklar avlodiga mansub, oydek ko'rkam va baxtli bola.", v:880},
+      {id:19, l:"Otabek", g:"m", lang:"O'zbekcha", m:"Shahzoda, xonzoda; beklar boshlig'i, elning sardori.", v:850},
+      {id:20, l:"Jasur", g:"m", lang:"Arabcha", m:"Qaytmas, mard, jur'atli, jasoratli va dovyurak bola.", v:910},
+      {id:21, l:"Madina", g:"f", lang:"Arabcha", m:"Muqaddas ziyoratgoh Madina shahri nomidan olingan go'zal qiz.", v:1790},
+      {id:22, l:"Zuhro", g:"f", lang:"Arabcha", m:"Cho'lpon yulduzidek porloq, ravshan va go'zal qiz.", v:1350},
+      {id:23, l:"Yasmina", g:"f", lang:"Arabcha / Fors-tojikcha", m:"Xushbo'y yosumin (jasmin) gulidek nafis, latofatli qiz.", v:1640},
+      {id:24, l:"Fotima", g:"f", lang:"Arabcha", m:"Payg'ambarimiz (s.a.v.)ning suyukli qizlarining muborak ismlari.", v:1510},
+      {id:25, l:"Rayhona", g:"f", lang:"Arabcha", m:"Rayhondek yoqimli, xushbo'y va dilkash qiz.", v:1470},
+      {id:26, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojo'y, iymonli va odobli qiz.", v:1310},
+      {id:27, l:"Samira", g:"f", lang:"Arabcha", m:"Suhbatdosh, dilkash, yoqimtoy va shirinso'z qiz.", v:1260},
+      {id:28, l:"Shahzoda", g:"f", lang:"Fors-tojikcha", m:"Shohlar avlodiga mansub, aslzoda, malikadek hurmatli qiz.", v:1040},
+      {id:29, l:"Oysha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli va pokdomon ayol.", v:1420},
+      {id:30, l:"Gulnora", g:"f", lang:"Fors-tojikcha", m:"Anor gulidek chiroyli, chehrasi qirmizi, go'zal qiz.", v:980},
+      {id:31, l:"Dildora", g:"f", lang:"Fors-tojikcha", m:"Dildan sevilgan, chin muhabbat sohibasi, suyukli qiz.", v:950},
+      {id:32, l:"Lola", g:"f", lang:"Fors-tojikcha", m:"Loladek yashnagan, go'zal va bahoriy tarovatli qiz.", v:890},
+      {id:33, l:"Barno", g:"f", lang:"Fors-tojikcha", m:"Yosh, navjuvon; xushbichim, kelishgan sohibjamol.", v:840},
+      {id:34, l:"Zilola", g:"f", lang:"Arabcha", m:"Tiniq buloq suvidek pokiza, toza va beg'ubor qiz.", v:860},
+      {id:35, l:"Shahnoza", g:"f", lang:"Fors-tojikcha", m:"Shohona nozli, nazokatli, latofatli va oliyjanob qiz.", v:910},
+      {id:36, l:"Sevinch", g:"f", lang:"O'zbekcha", m:"Shodlik, baxtiyorlik, oilaning sevinchi bo'lgan qiz.", v:1130},
+      {id:37, l:"Yulduz", g:"f", lang:"O'zbekcha", m:"Tolei yulduzdek yuksak va porloq bo'lsin, saodatli bo'lsin.", v:930},
+      {id:38, l:"Ozoda", g:"f", lang:"Fors-tojikcha", m:"Erkin, hur; toza, pokiza, saranjom va begunoh qiz.", v:920},
+      {id:39, l:"Sarvinoz", g:"f", lang:"Fors-tojikcha", m:"Sarv daraxtidek xushqomat, tik qaddi-qomatli va nozik qiz.", v:910},
+      {id:40, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi; Payg'ambarimizning ilk zavjalari muborak ismlari.", v:1180}
+    ];
+
+    window.ALL_NAMES = CORE_NAMES;
+
+    // Асинхронное подключение полного файла Excel/JSON базы без блокировок
+    function tryLoadFullDatabase() {
+      const paths = ['./names_data.js', 'names_data.js', '/names_data.js'];
+      let i = 0;
+      function next() {
+        if (i >= paths.length) return;
+        const script = document.createElement('script');
+        script.src = paths[i++];
+        script.onload = () => {
+          if (window.ALL_NAMES && window.ALL_NAMES.length > 50) {
+            refreshCurrentView();
+          }
+        };
+        script.onerror = () => next();
+        document.head.appendChild(script);
+      }
+      next();
+    }
+    tryLoadFullDatabase();
 
     const LATIN_ALPHABET = [
       'A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 
@@ -901,8 +883,15 @@
       favorites: []
     };
 
-    function getBaseNames() {
-      return (window.ALL_NAMES && Array.isArray(window.ALL_NAMES)) ? window.ALL_NAMES : [];
+    function refreshCurrentView() {
+      if (document.getElementById('catalogArea').style.display === 'block') {
+        if (state.activeLetter) {
+          window.selectLetter(state.activeLetter);
+        } else {
+          showAllNamesForGender();
+        }
+        renderTop10();
+      }
     }
 
     window.startChoosing = function () {
@@ -929,7 +918,7 @@
     };
 
     function showAllNamesForGender() {
-      const all = getBaseNames().filter(x => x.g === state.gender);
+      const all = (window.ALL_NAMES || []).filter(x => x.g === state.gender);
       currentRenderedList = all;
       currentLimit = 50;
 
@@ -955,7 +944,7 @@
       state.activeLetter = letter;
       renderAlphabetBar();
 
-      const names = getBaseNames().filter(item => {
+      const names = (window.ALL_NAMES || []).filter(item => {
         if (item.g !== state.gender) return false;
         const name = item.l || '';
         if (!name) return false;
@@ -1049,9 +1038,8 @@
         return;
       }
 
-      const matches = getBaseNames().filter(item => {
-        const nameMatch = (item.l || '').toLowerCase().includes(q) || (item.m || '').toLowerCase().includes(q);
-        return nameMatch;
+      const matches = (window.ALL_NAMES || []).filter(item => {
+        return (item.l || '').toLowerCase().includes(q) || (item.m || '').toLowerCase().includes(q);
       });
 
       if (badge) {
@@ -1081,7 +1069,7 @@
         } else {
           if (empty) empty.style.display = 'none';
           state.favorites.forEach(fav => {
-            const item = getBaseNames().find(x => x.id === fav.id);
+            const item = (window.ALL_NAMES || []).find(x => x.id === fav.id);
             if (item) list.appendChild(createNameAccordionElement(item));
           });
         }
@@ -1176,7 +1164,7 @@
       if (!grid) return;
       grid.innerHTML = '';
 
-      const list = getBaseNames().filter(x => x.g === state.gender).slice(0, 10);
+      const list = (window.ALL_NAMES || []).filter(x => x.g === state.gender).slice(0, 10);
       list.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = `top10-card rank-${index + 1}`;
