@@ -398,11 +398,50 @@
     }
     body.gender-f .card-meaning-text { border-left-color: var(--girl-color); }
 
+    /* Стили для блока похожих имен внутри карточки */
+    .similar-names-block {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-light);
+    }
+    .similar-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .similar-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .similar-chip {
+      background: #F0EAE1;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-full);
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .similar-chip:hover {
+      background: var(--boy-bg);
+      border-color: var(--boy-color);
+      color: var(--boy-color);
+    }
+    body.gender-f .similar-chip:hover {
+      background: var(--girl-bg);
+      border-color: var(--girl-color);
+      color: var(--girl-color);
+    }
+
     .card-share-block {
       display: flex;
       gap: 8px;
-      margin-top: 14px;
-      padding-top: 12px;
+      margin-top: 12px;
+      padding-top: 10px;
       border-top: 1px dashed var(--border-light);
     }
 
@@ -436,6 +475,12 @@
       border-radius: var(--radius-md);
       padding: 14px 16px;
       transition: all 0.2s;
+      cursor: pointer;
+    }
+    .top10-card:hover {
+      border-color: var(--boy-color);
+      background: #FFFFFF;
+      box-shadow: var(--shadow-sm);
     }
 
     .top10-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -619,10 +664,10 @@
       </div>
     </section>
 
-    <!-- 3: KATALOG (Алфавит ➔ Список по букве ➔ Топ-10) -->
+    <!-- 3: KATALOG -->
     <div id="catalogArea" style="display: none;">
 
-      <!-- 1. ALIFBO -->
+      <!-- ALIFBO -->
       <section class="section-alphabet">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -633,7 +678,7 @@
         <div class="alphabet-bar" id="alphabetBar"></div>
       </section>
 
-      <!-- 2. СПИСОК ПО БУКВЕ (Появляется строго между алфавитом и топ-10 при выборе буквы) -->
+      <!-- СПИСОК ПО БУКВЕ -->
       <section class="section-letter-names" id="letterNamesSection" style="display: none;">
         <div class="letter-results-header">
           <div class="letter-title-badge">
@@ -649,7 +694,7 @@
         <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="window.loadMoreNames()">Yana ko'rsatish (50 ta)</button>
       </section>
 
-      <!-- 3. TOP 10 -->
+      <!-- TOP 10 -->
       <section class="section-top10">
         <div class="section-header-row">
           <h2 class="section-heading">
@@ -741,25 +786,26 @@
 
     const CORE_NAMES = [
       {id:1, l:"Muhammad", g:"m", lang:"Arabcha", m:"Maqtovga, olqishlarga sazovor. Payg'ambarimiz (s.a.v.)ning muborak ismlari."},
-      {id:2, l:"Mustafo", g:"m", lang:"Arabcha", m:"Tanlangan, tanho, saylangan."},
-      {id:3, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr ko'ruvchi."},
-      {id:4, l:"Ali", g:"m", lang:"Arabcha", m:"Oliy, yuksak martabali."},
-      {id:5, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr ko'ruvchi, adolatli."},
-      {id:6, l:"Zubayr", g:"m", lang:"Arabcha", m:"Kuchli, qudratli, jasur va mard yigit."},
-      {id:7, l:"Zayd", g:"m", lang:"Arabcha", m:"O'suvchi, ziyoda bo'luvchi, barakali."},
-      {id:8, l:"Ayub", g:"m", lang:"Arabcha", m:"Sabr-toqatli, sinovlarga dosh beruvchi."},
-      {id:9, l:"Jahongir", g:"m", lang:"Forscha", m:"Jahonni egallovchi, dunyoni zabt etuvchi."},
-      {id:10, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, go'zallik va jamol ramzi."},
-      {id:11, l:"Sadiya", g:"f", lang:"Arabcha", m:"Baxtli, saodatli, omadli va quvonchli qiz."},
-      {id:12, l:"Safiya", g:"f", lang:"Arabcha", m:"Sof, pokiza, tanlangan, chin do'st."},
-      {id:13, l:"Maryam", g:"f", lang:"Arabcha", m:"Ibodatgo'y, pokiza; Iso payg'ambarning onalari."},
-      {id:14, l:"Oyisha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli ayol."},
-      {id:15, l:"Aziza", g:"f", lang:"Arabcha", m:"Qadrli, hurmatli, ulug' va aziz inson."},
-      {id:16, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojoy, iymonli qiz."},
-      {id:17, l:"Mubina", g:"f", lang:"Arabcha", m:"Ochiq-oydin, ravshan, porloq."},
-      {id:18, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi."},
-      {id:19, l:"Sumayya", g:"f", lang:"Arabcha", m:"Yuksak, qadr-qimmati baland, e'zozli ayol."},
-      {id:20, l:"Imona", g:"f", lang:"Arabcha", m:"Iymonli, e'tiqodli, Allohga inonuvchi qiz."}
+      {id:2, l:"Muhammadali", g:"m", lang:"Arabcha", m:"Muhammad va Ali ismlarining qo'shilishidan tashkil topgan ulug'vor ism."},
+      {id:3, l:"Mustafo", g:"m", lang:"Arabcha", m:"Tanlangan, tanho, saylangan."},
+      {id:4, l:"Imron", g:"m", lang:"Arabcha", m:"Tiriklik, barhayotlik, uzoq umr ko'ruvchi."},
+      {id:5, l:"Ali", g:"m", lang:"Arabcha", m:"Oliy, yuksak martabali."},
+      {id:6, l:"Umar", g:"m", lang:"Arabcha", m:"Barhayot, uzoq umr ko'ruvchi, adolatli."},
+      {id:7, l:"Zubayr", g:"m", lang:"Arabcha", m:"Kuchli, qudratli, jasur va mard yigit."},
+      {id:8, l:"Zayd", g:"m", lang:"Arabcha", m:"O'suvchi, ziyoda bo'luvchi, barakali."},
+      {id:9, l:"Ayub", g:"m", lang:"Arabcha", m:"Sabr-toqatli, sinovlarga dosh beruvchi."},
+      {id:10, l:"Jahongir", g:"m", lang:"Forscha", m:"Jahonni egallovchi, dunyoni zabt etuvchi."},
+      {id:11, l:"Yusuf", g:"m", lang:"Arabcha", m:"Husnda tengsiz, go'zallik va jamol ramzi."},
+      {id:12, l:"Sadiya", g:"f", lang:"Arabcha", m:"Baxtli, saodatli, omadli va quvonchli qiz."},
+      {id:13, l:"Safiya", g:"f", lang:"Arabcha", m:"Sof, pokiza, tanlangan, chin do'st."},
+      {id:14, l:"Maryam", g:"f", lang:"Arabcha", m:"Ibodatgo'y, pokiza; Iso payg'ambarning onalari."},
+      {id:15, l:"Oyisha", g:"f", lang:"Arabcha", m:"Yashovchi, barhayot, saodatli ayol."},
+      {id:16, l:"Aziza", g:"f", lang:"Arabcha", m:"Qadrli, hurmatli, ulug' va aziz inson."},
+      {id:17, l:"Muslima", g:"f", lang:"Arabcha", m:"Musulmon, xudojoy, iymonli qiz."},
+      {id:18, l:"Mubina", g:"f", lang:"Arabcha", m:"Ochiq-oydin, ravshan, porloq."},
+      {id:19, l:"Hadicha", g:"f", lang:"Arabcha", m:"Chaqaloqlarning eng azizi."},
+      {id:20, l:"Sumayya", g:"f", lang:"Arabcha", m:"Yuksak, qadr-qimmati baland, e'zozli ayol."},
+      {id:21, l:"Imona", g:"f", lang:"Arabcha", m:"Iymonli, e'tiqodli, Allohga inonuvchi qiz."}
     ];
 
     window.ALL_NAMES = CORE_NAMES;
@@ -1139,6 +1185,79 @@
       });
     };
 
+    // АЛГОРИТМ ПОДБОРА ПОХОЖИХ ИМЕН (с учетом совпадения корня и порядка букв)
+    function getSimilarNames(currentItem, allNamesList, limit = 3) {
+      if (!allNamesList || !Array.isArray(allNamesList)) return [];
+      
+      const currentNameNorm = normalizeStr(currentItem.l);
+      const currentLang = currentItem.lang || '';
+      const currentGender = currentItem.g;
+
+      let candidates = allNamesList.filter(x => x.g === currentGender && x.id !== currentItem.id);
+
+      const scored = candidates.map(item => {
+        let score = 0;
+        const nameNorm = normalizeStr(item.l);
+
+        // 1. Совпадение корня / порядка букв (вхождение одного в другое, например Muhammad и Muhammadali)
+        if (nameNorm.includes(currentNameNorm) || currentNameNorm.includes(nameNorm)) {
+          score += 10;
+        }
+
+        // 2. Совпадение префикса (начала имени, первые 3 буквы)
+        if (currentNameNorm.length >= 3 && nameNorm.length >= 3) {
+          if (nameNorm.slice(0, 3) === currentNameNorm.slice(0, 3)) {
+            score += 5;
+          }
+        }
+
+        // 3. Совпадение по происхождению (языку)
+        if (item.lang === currentLang) score += 3;
+
+        // 4. Первая буква
+        if (nameNorm[0] === currentNameNorm[0]) score += 2;
+
+        // 5. Близкая длина
+        if (Math.abs(nameNorm.length - currentNameNorm.length) <= 2) score += 2;
+
+        return { item, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      return scored.slice(0, limit).map(x => x.item);
+    }
+
+    // Клик по похожему имени в карточке — открывает его или прокручивает
+    window.selectSpecificName = function(itemId) {
+      const all = getBaseNames();
+      const target = all.find(x => x.id === itemId);
+      if (!target) return;
+
+      // Закрываем модалки если открыты
+      window.closeSearchModal();
+      window.closeFavoritesModal();
+
+      // Выбираем правильный пол и показываем букву
+      window.selectGender(target.g);
+      const firstLetter = target.l[0].toUpperCase();
+      window.selectLetter(firstLetter);
+
+      // Находим элемент вDOM и разворачиваем его
+      setTimeout(() => {
+        const items = document.querySelectorAll('.name-accordion-item');
+        items.forEach(el => {
+          const strong = el.querySelector('.name-primary');
+          if (strong && normalizeStr(strong.textContent) === normalizeStr(target.l)) {
+            if (!el.classList.contains('open')) {
+              el.classList.add('open');
+              recordView(target.id);
+            }
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+      }, 150);
+    };
+
     function createNameAccordionElement(item) {
       window.ALL_NAMES = processBaseViews(window.ALL_NAMES);
       const primaryName = item.l || '';
@@ -1149,6 +1268,20 @@
 
       const shareText = `👶 ${primaryName} — ${item.m || ''}\n\nManba: Bolagaism.uz`;
       const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(shareText)}`;
+
+      // Получаем похожие имена
+      const similarItems = getSimilarNames(item, getBaseNames(), 3);
+      let similarHtml = '';
+      if (similarItems.length > 0) {
+        similarHtml = `
+          <div class="similar-names-block">
+            <div class="similar-title">O'xshash ismlar:</div>
+            <div class="similar-chips">
+              ${similarItems.map(sim => `<span class="similar-chip" onclick="window.selectSpecificName(${sim.id})">${sim.l}</span>`).join('')}
+            </div>
+          </div>
+        `;
+      }
 
       wrap.innerHTML = `
         <div class="accordion-header">
@@ -1169,6 +1302,7 @@
             <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 O'g'il bola" : "👧 Qiz bola"}</span>
           </div>
           <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>
+          ${similarHtml}
           <div class="card-share-block">
             <a href="${tgUrl}" target="_blank" class="share-action-btn tg">✈️ Telegramda ulashish</a>
           </div>
