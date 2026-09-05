@@ -12,12 +12,12 @@
   <url>
     <loc>https://bolagaism.uz/about.html</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://bolagaism.uz/contact.html</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://bolagaism.uz/privacy.html</loc>
@@ -79,7 +79,7 @@
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=E</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=F</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=G</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://bolagaism.uz/?jins=f&amp;harf=H</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://bolagaism.uz/?jins=f&amp:harf=H</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=I</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=J</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>https://bolagaism.uz/?jins=f&amp;harf=K</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
