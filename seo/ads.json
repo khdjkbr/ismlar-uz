@@ -1,0 +1,11 @@
+{
+  "publisher": "ca-pub-9145965401414117",
+  "consent_setup_verified": false,
+  "placements": {
+    "home_after_guide": {"slot": "2415614576", "size": "banner"},
+    "catalog_after_12": {"slot": "4469108443", "size": "banner"},
+    "catalog_after_36": {"slot": null, "size": "banner"},
+    "name_after_sources": {"slot": null, "size": "rectangle"},
+    "article_after_section": {"slot": null, "size": "banner"}
+  }
+}
