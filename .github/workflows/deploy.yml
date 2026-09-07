@@ -36,13 +36,19 @@ jobs:
         run: |
           python convert_excel_to_json.py
 
+      - name: Build static SEO pages
+        run: python build_site.py --production --ads off --data names.json
+
+      - name: Validate generated pages
+        run: python test_build.py _site-production
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site-production'
 
       - name: Deploy to GitHub Pages
         id: deployment

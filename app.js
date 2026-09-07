@@ -74,6 +74,7 @@
     }
 
     let dataReady = false;
+    let dataPromise;
     let initialUrlHandled = false;
     const FAVORITES_KEY = 'ismlar_favorites_v3';
     const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -85,7 +86,7 @@
     function cleanFavorites() {
       const now = Date.now();
       state.favorites = state.favorites.filter(f => f && typeof f.key === 'string' &&
-        Number.isFinite(f.addedAt) && f.addedAt <= now && now - f.addedAt < WEEK_MS);
+        Number.isFinite(f.addedAt) && f.addedAt <= now);
       saveFavorites();
       const badge = document.getElementById('favHeaderBadge');
       if (badge) badge.textContent = state.favorites.length;
@@ -138,25 +139,31 @@
       if (document.getElementById('modalFavorites').style.display === 'flex') window.openFavoritesModal();
       checkUrlParams();
     }
-    fetch('names.json')
+    function ensureNames() {
+      if (dataPromise) return dataPromise;
+      dataPromise = fetch('/names.json')
       .then(res => { if (!res.ok) throw new Error('Missing names.json'); return res.json(); })
       .then(data => {
         if (!Array.isArray(data) || !data.length) throw new Error('Empty names data');
         window.ALL_NAMES = data;
         refreshDataOnScreen();
       })
-      .catch(() => {
+      .catch(() => new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'names_data.js';
-        script.onload = refreshDataOnScreen;
+        script.src = '/names_data.js';
+        script.onload = () => { refreshDataOnScreen(); resolve(); };
+        script.onerror = () => { dataPromise = null; reject(new Error('Ismlar yuklanmadi')); };
         document.body.appendChild(script);
-      });
+      }));
+      return dataPromise;
+    }
 
     window.startChoosing = function () {
       showStep('gender');
     };
 
     window.selectGender = function (gender) {
+      if (!dataReady) ensureNames().catch(showLoadError);
       state.gender = gender;
       state.activeLetter = null;
 
@@ -258,6 +265,8 @@
     };
 
     window.openSearchModal = function () {
+      if (window.NAME_ROUTES) { location.href = '/qidiruv/'; return; }
+      ensureNames().catch(showLoadError);
       document.getElementById('modalSearch').style.display = 'flex';
       setTimeout(() => document.getElementById('modalSearchInput').focus(), 80);
     };
@@ -308,6 +317,8 @@
     };
 
     window.openFavoritesModal = function () {
+      if (window.NAME_ROUTES) { location.href = '/tanlangan/'; return; }
+      if (!dataReady) ensureNames().catch(showLoadError);
       cleanFavorites();
       const list = document.getElementById('favNamesList');
       const empty = document.getElementById('favEmptyState');
@@ -402,6 +413,10 @@
     window.selectSpecificName = function(itemId) {
       const target = getBaseNames().find(x => x.id === itemId);
       if (!target) return;
+      if (window.NAME_ROUTES && window.NAME_ROUTES[nameKey(target)]) {
+        location.href = window.NAME_ROUTES[nameKey(target)];
+        return;
+      }
       window.closeSearchModal();
       window.closeFavoritesModal();
       window.selectGender(target.g);
@@ -418,6 +433,7 @@
     };
 
     function nameUrl(item) {
+      if (window.NAME_ROUTES && window.NAME_ROUTES[nameKey(item)]) return new URL(window.NAME_ROUTES[nameKey(item)], location.origin).href;
       const url = new URL(window.location.pathname, window.location.origin);
       url.searchParams.set('ism', nameKey(item));
       return url.href;
@@ -439,7 +455,7 @@
           <div class="similar-names-block">
             <div class="similar-title">O'xshash ismlar:</div>
             <div class="similar-chips">
-              ${similarItems.map(sim => `<span class="similar-chip" onclick="window.selectSpecificName(${sim.id})">${sim.l}</span>`).join('')}
+              ${similarItems.map(sim => `<a class="similar-chip" href="${escapeHtml(nameUrl(sim))}">${escapeHtml(sim.l)}</a>`).join('')}
             </div>
           </div>
         `;
@@ -534,18 +550,46 @@
     }
 
     function showStep(step) {
-      document.getElementById('stepWelcome').style.display = (step === 'welcome') ? 'block' : 'none';
-      document.getElementById('stepGender').style.display = (step === 'gender') ? 'block' : 'none';
-      document.getElementById('catalogArea').style.display = (step === 'catalog') ? 'block' : 'none';
+      const welcome = document.getElementById('stepWelcome');
+      const gender = document.getElementById('stepGender');
+      const catalog = document.getElementById('catalogArea');
+      if (welcome) welcome.style.display = (step === 'welcome') ? 'block' : 'none';
+      if (gender) gender.style.display = (step === 'gender') ? 'block' : 'none';
+      if (catalog) catalog.style.display = (step === 'catalog') ? 'block' : 'none';
     }
 
     function init() {
-      updateFooterStats();
+      showStep(window.NAME_ROUTES ? 'gender' : 'welcome');
+      const params = new URLSearchParams(location.search);
+      const routes = window.NAME_ROUTES;
+      if (routes && params.get('ism') && routes[params.get('ism')]) {
+        location.replace(routes[params.get('ism')]); return;
+      }
+      if (routes && params.has('q')) {
+        location.replace('/qidiruv/?q=' + encodeURIComponent(params.get('q'))); return;
+      }
+      if (routes && ['m', 'f'].includes(params.get('jins'))) {
+        const group = params.get('jins') === 'm' ? 'ogil-bola-ismlari' : 'qiz-bola-ismlari';
+        const letter = LATIN_ALPHABET.find(l => normalizeStr(l) === normalizeStr(params.get('harf')));
+        if (!params.has('harf') || letter) {
+          location.replace('/' + group + '/' + (letter ? normalizeStr(letter).replace("'", '-tutuq') + '/' : '')); return;
+        }
+      }
+      if (params.has('ism') || params.has('q') || params.has('jins')) {
+        // Legacy interactive views are useful to visitors, but are not separate SEO pages.
+        let robots = document.querySelector('meta[name="robots"]');
+        if (!robots) { robots = document.createElement('meta'); robots.name = 'robots'; document.head.append(robots); }
+        robots.content = 'noindex, follow';
+        ensureNames().catch(showLoadError);
+      }
+    }
 
-
-
-      showStep('welcome');
-      checkUrlParams();
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function showLoadError() {
+      const target = document.getElementById('top10Grid');
+      if (target) target.textContent = 'Ismlar yuklanmadi. Sahifani yangilang yoki alifbo katalogidan foydalaning.';
     }
 
     if (document.readyState === 'loading') {

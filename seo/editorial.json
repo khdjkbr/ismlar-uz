@@ -1,0 +1,44 @@
+{
+  "m:muhammad": {
+    "slug": "muhammad", "reviewed": "2026-09-06", "k": "Муҳаммад",
+    "meaning": "Maqtovga sazovor, maqtalgan.", "origin": "Arabcha",
+    "note": "Arab tilidagi maqtash ma'nosini bildiruvchi ildizdan kelib chiqqan. Muhammad payg'ambarning ismi sifatida musulmon xalqlari orasida qo'llanadi.",
+    "variants": "Mohammad va Mohammed boshqa tillardagi yozilish variantlaridir. O'zbekcha shakli — Muhammad.",
+    "sources": ["https://www.behindthename.com/name/muhammad"]
+  },
+  "m:ali": {
+    "slug": "ali", "reviewed": "2026-09-06", "k": "Али",
+    "meaning": "Yuksak, ulug' martabali.", "origin": "Arabcha",
+    "note": "Ismning arabcha ildizi balandlik va yuksaklik tushunchasiga bog'liq. Tarixda Ali ibn Abu Tolib nomi bilan tanilgan.",
+    "variants": "Aliya va Aliyya shu ildizga bog'liq ayol ismlaridir; ular Ali ismining aynan bir xil yozilishi emas.",
+    "sources": ["https://www.behindthename.com/name/ali-1"]
+  },
+  "m:umar": {
+    "slug": "umar", "reviewed": "2026-09-06", "k": "Умар",
+    "meaning": "Yashovchi, uzoq umr ko'ruvchi; ravnaq topuvchi.", "origin": "Arabcha",
+    "note": "Arab tilidagi umr, hayot tushunchasi bilan bog'liq ism. Umar ibn Xattob va Umar Xayyom kabi tarixiy shaxslar shu ismni olgan.",
+    "variants": "Omar va Omer boshqa tillarda uchraydigan variantlardir. O'zbekcha yozilishi — Umar.",
+    "sources": ["https://www.behindthename.com/name/umar"]
+  },
+  "m:yusuf": {
+    "slug": "yusuf", "reviewed": "2026-09-06", "k": "Юсуф",
+    "meaning": "Ko'paytirish, qo'shish tushunchasiga bog'liq qadimiy ismning arabcha shakli.", "origin": "Qadimiy ibroniycha ildiz, arabcha shakl",
+    "note": "Yusuf — Yosef ismining arabcha shakli. Ildizining ma'nosi qo'shish yoki ko'paytirish bilan bog'liq. Yusuf shakli Qur'onda ham uchraydi.",
+    "variants": "Yousef va Yousuf — boshqa yozilish variantlari. Joseph shu qadimiy ismning boshqa tillardagi shaklidir.",
+    "sources": ["https://www.behindthename.com/name/yusuf", "https://www.behindthename.com/name/joseph"]
+  },
+  "f:maryam": {
+    "slug": "maryam", "reviewed": "2026-09-06",
+    "meaning": "Miryam ismining arabcha shakli; dastlabki lug'aviy ma'nosi aniq emas.", "origin": "Qadimiy Miryam ismining arabcha shakli",
+    "note": "Maryam Qur'onda uchraydigan ism. Uning qadimiy ildizi haqida turli talqinlar mavjud, shu sabab bitta taxminni qat'iy tarjima sifatida keltirmaymiz.",
+    "variants": "Mariam va Mariyam boshqa tillarda uchraydigan shakllardir. Ularning yozilishi va talaffuzi tilga qarab farqlanadi.",
+    "sources": ["https://www.behindthename.com/name/maryam", "https://www.behindthename.com/name/mary"]
+  },
+  "f:safiya": {
+    "slug": "safiya", "reviewed": "2026-09-06",
+    "meaning": "Sof, pokiza.", "origin": "Arabcha",
+    "note": "Safiya arabcha Safiyya ismining yozilish variantidir. Safiyya esa Safi ismining ayol shakli bo'lib, soflik ma'nosiga bog'liq.",
+    "variants": "Safiyya, Safiyyah va Safia — shu ismning boshqa yozilish variantlari.",
+    "sources": ["https://www.behindthename.com/name/safiya", "https://www.behindthename.com/name/safiyya", "https://www.behindthename.com/name/safi"]
+  }
+}

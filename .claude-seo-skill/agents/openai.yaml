@@ -1,0 +1,6 @@
+interface:
+  display_name: "Claude SEO"
+  short_description: "Evidence-led SEO audits and implementation"
+  default_prompt: "Use $claude-seo to audit this website and produce a prioritized, verifiable SEO implementation plan."
+policy:
+  allow_implicit_invocation: true

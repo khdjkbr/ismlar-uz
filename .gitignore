@@ -1,0 +1,7 @@
+_site/
+_site-production/
+artifacts/
+__pycache__/
+names.json
+node_modules/
+
