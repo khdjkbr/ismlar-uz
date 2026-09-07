@@ -1,0 +1,6 @@
+name = "bolagaism-uz"
+compatibility_date = "2026-09-07"
+
+[assets]
+directory = "./_site-production"
+not_found_handling = "404-page"
