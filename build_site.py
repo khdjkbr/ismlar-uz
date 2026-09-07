@@ -154,7 +154,10 @@ class Builder:
 <meta property="og:type" content="website"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{BASE}{esc(path)}"><meta property="og:image" content="{BASE}/social-card.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Bolagaism.uz — O'zbek ismlari"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
-<script type="application/ld+json">{js_json(schema)}</script>'''
+<script type="application/ld+json">{js_json(schema)}</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WMMETC5LY8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-WMMETC5LY8');</script>
+<script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();k=e.createElement(t);a=e.getElementsByTagName(t)[0];k.async=1;k.src=r;a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');ym(112365590,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});</script>'''
 
     def page(self, path, title, description, body, crumbs=None, gender='', noindex=False, modified=None, main_entity=None):
         head = self.head(title, description, path, noindex, crumbs, main_entity, modified)

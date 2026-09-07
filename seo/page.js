@@ -1,5 +1,9 @@
 (() => {
   'use strict';
+  const track = (name, params = {}) => {
+    try { if (typeof window.gtag === 'function') window.gtag('event', name, params); } catch (e) {}
+    try { if (typeof window.ym === 'function') window.ym(112365590, 'reachGoal', name, params); } catch (e) {}
+  };
   const STORE = 'ismlar_favorites_v3';
   const WEEK = 7 * 86400000;
   const normalize = s => (s || '').replace(/[‘ʻ`’ʼ]/g, "'").trim().toLowerCase();
@@ -155,8 +159,16 @@
     gender.addEventListener('change', search);
     input.form.addEventListener('reset', () => setTimeout(search, 0));
     input.addEventListener('input', () => { ++requestId; clearTimeout(debounce); debounce = setTimeout(search, 120); });
-    input.form.addEventListener('submit', e => { e.preventDefault(); search(); });
+    input.form.addEventListener('submit', e => { e.preventDefault(); track('search_submit', {query: input.value.trim()}); search(); });
     more.addEventListener('click', () => { limit += 50; render(); });
     search();
   }
+  document.addEventListener('click', e => {
+    const save = e.target.closest('[data-save-name]');
+    if (save) track('favorite_toggle', {name: save.getAttribute('data-name-label') || ''});
+    const share = e.target.closest('a[href*="t.me/share"]');
+    if (share) track('telegram_share');
+    const gender = e.target.closest('.gender-option, .gender-card-btn');
+    if (gender) track('gender_select', {label: gender.textContent.trim().slice(0, 40)});
+  });
 })();
