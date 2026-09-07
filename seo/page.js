@@ -124,7 +124,6 @@
     const status = document.getElementById('search-status');
     const more = document.getElementById('search-more');
     const gender = document.getElementById('filter-gender');
-    const length = document.getElementById('filter-length');
     let requestId = 0, limit = 50, matches = [], debounce;
     const render = () => {
       results.replaceChildren(...matches.slice(0, limit).map(tile));
@@ -137,15 +136,14 @@
       const params = new URLSearchParams();
       if (q) params.set('q', input.value);
       if (gender.value) params.set('gender', gender.value);
-      if (length.value) params.set('length', length.value);
       history.replaceState(null, '', location.pathname + (params.size ? '?' + params : ''));
-      if (!q && !gender.value && !length.value) { status.textContent = 'Ism yozing yoki filtr tanlang.'; return; }
+      if (!q && !gender.value) { status.textContent = 'Ism yozing yoki jinsni tanlang.'; return; }
       status.textContent = 'Qidirilmoqda…';
       try {
         const names = await index();
         if (id !== requestId) return;
         matches = names.filter(n => normalize(n.l).includes(q) || normalize(n.k).includes(q));
-        matches = matches.filter(n => (!gender.value || n.g === gender.value) && (!length.value || (length.value === 'short' ? [...normalize(n.l).replace(/[^\p{L}]/gu, '')].length <= 5 : [...normalize(n.l).replace(/[^\p{L}]/gu, '')].length > 5)));
+        matches = matches.filter(n => !gender.value || n.g === gender.value);
         matches.sort((a, b) => Number(normalize(b.l).startsWith(q)) - Number(normalize(a.l).startsWith(q)) || a.l.localeCompare(b.l));
         limit = 50;
         status.textContent = matches.length ? matches.length + ' ta ism topildi' : 'Ism topilmadi. Boshqa yozilish variantini sinab ko‘ring.';
@@ -154,9 +152,7 @@
     }
     input.value = new URLSearchParams(location.search).get('q') || '';
     gender.value = new URLSearchParams(location.search).get('gender') || '';
-    length.value = new URLSearchParams(location.search).get('length') || '';
     gender.addEventListener('change', search);
-    length.addEventListener('change', search);
     input.form.addEventListener('reset', () => setTimeout(search, 0));
     input.addEventListener('input', () => { ++requestId; clearTimeout(debounce); debounce = setTimeout(search, 120); });
     input.form.addEventListener('submit', e => { e.preventDefault(); search(); });
