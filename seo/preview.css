@@ -70,6 +70,7 @@ button, input { font: inherit; }
 .search-status { margin: 12px 0; color: var(--text-muted); }
 .status-message { min-height: 1.5em; font-size: .85rem; color: var(--text-muted); margin-top: 10px; }
 .nav-actions { display: flex; gap: 8px; align-items: center; }
+.favorite-nav span:first-child { font-size: 1.05rem; line-height: 1; }
 .icon-nav { font-size: 1.05rem; min-width: 42px; padding-left: 11px; padding-right: 11px; }
 .action-row-bottom { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--border-light); }
 .home-catalog-links { margin: 10px 0 24px; }
