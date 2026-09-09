@@ -321,7 +321,7 @@ class Builder:
         self.write('ads.txt', 'google.com, ' + self.ads['publisher'].removeprefix('ca-') + ', DIRECT, f08c47fec0942fa0\n')
         self.write('robots.txt', 'User-agent: *\nAllow: /\n\nSitemap: ' + BASE + '/sitemap.xml\n')
         self.write('.nojekyll', '')
-        self.write('favicon.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#FAF7F2"/><path d="M27 12h10l2 7H25l2-7Z" fill="#9CC9F5"/><path d="M25 18h14l2 5H23l2-5Z" fill="#F7C7D8"/><path d="M24 23h16v28H24z" rx="7" fill="#FFDDE7" stroke="#E7A9C0" stroke-width="2"/><path d="M28 29h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M28 38h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M30 12c0-3 4-3 4 0" fill="none" stroke="#F4B85E" stroke-width="2" stroke-linecap="round"/></svg>')
+        self.write('favicon.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M27 12h10l2 7H25l2-7Z" fill="#9CC9F5"/><path d="M25 18h14l2 5H23l2-5Z" fill="#F7C7D8"/><path d="M24 23h16v28H24z" rx="7" fill="#FFDDE7" stroke="#E7A9C0" stroke-width="2"/><path d="M28 29h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M28 38h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M30 12c0-3 4-3 4 0" fill="none" stroke="#F4B85E" stroke-width="2" stroke-linecap="round"/></svg>')
         favicon = ROOT / 'favicon.ico'
         if favicon.exists():
             shutil.copyfile(favicon, self.out / 'favicon.ico')
