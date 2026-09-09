@@ -150,7 +150,7 @@ class Builder:
         return f'''<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description)}">
 <meta name="robots" content="{'noindex, follow' if noindex else 'index, follow'}">
-<link rel="canonical" href="{BASE}{esc(path)}"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="{BASE}{esc(path)}"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate icon" href="/favicon.ico" type="image/x-icon">
 <meta property="og:type" content="website"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{BASE}{esc(path)}"><meta property="og:image" content="{BASE}/social-card.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Bolagaism.uz — O'zbek ismlari"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
@@ -322,6 +322,10 @@ class Builder:
         self.write('robots.txt', 'User-agent: *\nAllow: /\n\nSitemap: ' + BASE + '/sitemap.xml\n')
         self.write('.nojekyll', '')
         self.write('favicon.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#FAF7F2"/><text x="32" y="46" text-anchor="middle" font-size="42">B</text></svg>')
+        favicon = ROOT / 'favicon.ico'
+        if favicon.exists():
+            shutil.copyfile(favicon, self.out / 'favicon.ico')
+            self.files.add('favicon.ico')
         social = ROOT / 'seo/social-card.png'
         if not social.exists():
             raise ValueError('Missing seo/social-card.png')
