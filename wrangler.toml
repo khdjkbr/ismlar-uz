@@ -1,6 +1,13 @@
 name = "bolagaism-uz"
 compatibility_date = "2026-09-07"
+main = "admin/worker.js"
 
 [assets]
 directory = "./_site-production"
+binding = "ASSETS"
 not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bolagaism-admin"
+database_id = "e55bf0de-2738-4847-9bb9-61a565e5b3e8"

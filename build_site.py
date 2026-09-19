@@ -326,6 +326,15 @@ class Builder:
         if favicon.exists():
             shutil.copyfile(favicon, self.out / 'favicon.ico')
             self.files.add('favicon.ico')
+        admin_dir = ROOT / 'admin'
+        admin_out = self.out / 'oshxona'
+        admin_out.mkdir(parents=True, exist_ok=True)
+        for admin_asset in ('index.html', 'admin.css', 'admin.js'):
+            source = admin_dir / admin_asset
+            if source.exists():
+                target = admin_out / admin_asset
+                shutil.copyfile(source, target)
+                self.files.add(str(target.relative_to(self.out)).replace('\\', '/'))
         social = ROOT / 'seo/social-card.png'
         if not social.exists():
             raise ValueError('Missing seo/social-card.png')

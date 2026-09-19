@@ -43,4 +43,4 @@ async function api(request, env) {
   return json({ error: 'Not found' }, 404);
 }
 
-export default { async fetch(request, env) { const url = new URL(request.url); if (url.pathname.startsWith('/api/oshxona/')) return api(request, env); return env.ASSETS.fetch(request); } };
+export default { async fetch(request, env) { const url = new URL(request.url); if (url.pathname.startsWith('/api/oshxona/')) return api(request, env); if (url.pathname === '/oshxona' || url.pathname.startsWith('/oshxona/')) { if (!requireEditor(request)) return new Response('Authentication required', { status: 401, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } }); } return env.ASSETS.fetch(request); } };
