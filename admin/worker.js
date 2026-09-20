@@ -54,6 +54,8 @@ async function api(request, env) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS articles (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT '', cover_image TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','review','published','archived')), seo_title TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '', author_email TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
   await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status)`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS article_revisions (id INTEGER PRIMARY KEY AUTOINCREMENT, article_id TEXT NOT NULL, snapshot_json TEXT NOT NULL, action TEXT NOT NULL, editor_email TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS videos (id TEXT PRIMARY KEY, video_id TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published','archived')), sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
+  await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_videos_status_order ON videos(status, sort_order, published_at)`).run();
   if (request.method === 'POST' && url.pathname === '/api/oshxona/import') {
     const offset = Math.max(0, Number(url.searchParams.get('offset') || 0));
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || 200)));
@@ -87,6 +89,21 @@ async function api(request, env) {
     const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''; const rows = await env.DB.prepare(`SELECT id, slug, title, excerpt, category, status, seo_title, seo_description, updated_at, published_at FROM articles ${clause} ORDER BY updated_at DESC LIMIT 100`).bind(...args).all();
     const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'review') AS review, SUM(status = 'draft') AS draft FROM articles").first(); return json({ user: email, rows: rows.results || [], counts });
   }
+  if (request.method === 'GET' && url.pathname === '/api/oshxona/videos') {
+    const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
+    if (q) { where.push('(title LIKE ? OR description LIKE ? OR video_id LIKE ?)'); args.push(`%${q}%`, `%${q}%`, `%${q}%`); } if (status) { where.push('status = ?'); args.push(status); }
+    const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''; const rows = await env.DB.prepare(`SELECT id, video_id, title, description, status, sort_order, updated_at, published_at FROM videos ${clause} ORDER BY sort_order ASC, updated_at DESC LIMIT 100`).bind(...args).all();
+    const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'draft') AS draft FROM videos").first(); return json({ user: email, rows: rows.results || [], counts });
+  }
+  if ((request.method === 'POST' || request.method === 'PATCH') && url.pathname.startsWith('/api/oshxona/videos')) {
+    const body = await request.json(); const title = String(body.title || '').trim(); const videoId = String(body.video_id || '').trim();
+    if (!title || !/^[A-Za-z0-9_-]{6,20}$/.test(videoId)) return json({ error: 'Укажите название и корректный YouTube ID' }, 400);
+    const id = url.pathname.split('/').pop(); const now = new Date().toISOString(); const status = body.status || 'draft'; const order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0;
+    if (!['draft', 'published', 'archived'].includes(status)) return json({ error: 'Некорректный статус' }, 400);
+    if (request.method === 'POST') { const newId = crypto.randomUUID(); await env.DB.prepare('INSERT INTO videos (id, video_id, title, description, status, sort_order, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, videoId, title, String(body.description || '').trim(), status, order, now, status === 'published' ? now : null).run(); return json({ id: newId }, 201); }
+    const previous = await env.DB.prepare('SELECT id FROM videos WHERE id = ?').bind(id).first(); if (!previous) return json({ error: 'Video not found' }, 404);
+    await env.DB.prepare('UPDATE videos SET video_id=?, title=?, description=?, status=?, sort_order=?, updated_at=?, published_at=CASE WHEN ? = \'published\' THEN COALESCE(published_at, ?) ELSE published_at END WHERE id=?').bind(videoId, title, String(body.description || '').trim(), status, order, now, status, now, id).run(); return json({ id });
+  }
   if ((request.method === 'POST' || request.method === 'PATCH') && url.pathname.startsWith('/api/oshxona/articles')) {
     const body = await request.json(); if (!body.title) return json({ error: 'Title is required' }, 400); const id = url.pathname.split('/').pop(); const now = new Date().toISOString();
     if (request.method === 'POST') { const newId = crypto.randomUUID(); const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, ''); const payload = { id:newId, slug, ...body }; await env.DB.prepare('INSERT INTO articles (id, slug, title, excerpt, content, category, cover_image, status, seo_title, seo_description, author_email, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, slug, body.title, body.excerpt || '', body.content || '', body.category || '', body.cover_image || '', body.status || 'draft', body.seo_title || body.title, body.seo_description || body.excerpt || '', email, now, body.status === 'published' ? now : null).run(); await env.DB.prepare('INSERT INTO article_revisions (article_id, snapshot_json, action, editor_email) VALUES (?, ?, ?, ?)').bind(newId, JSON.stringify(payload), 'created', email).run(); return json({ id:newId }, 201); }
@@ -103,6 +120,22 @@ async function api(request, env) {
   return json({ error: 'Not found' }, 404);
 }
 function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+async function videoMarkup(env) {
+  if (!env.DB) return '';
+  try {
+    const rows = (await env.DB.prepare("SELECT video_id, title, description FROM videos WHERE status='published' ORDER BY sort_order ASC, published_at DESC LIMIT 12").all()).results || [];
+    if (!rows.length) return '';
+    return `<section class="video-carousel" aria-labelledby="video-carousel-title"><div class="video-carousel-head"><div><span class="eyebrow">Video tavsiyalar</span><h2 id="video-carousel-title">Foydali videolar</h2></div><div class="video-carousel-controls"><button type="button" class="video-scroll" data-video-scroll="prev" aria-label="Oldingi videolar">←</button><button type="button" class="video-scroll" data-video-scroll="next" aria-label="Keyingi videolar">→</button></div></div><div class="video-track" data-video-track>${rows.map((row) => `<article class="video-card"><a class="video-thumb" href="https://www.youtube.com/watch?v=${encodeURIComponent(row.video_id)}" target="_blank" rel="noopener" data-video-id="${escapeHtml(row.video_id)}" aria-label="${escapeHtml(row.title)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h3>${escapeHtml(row.title)}</h3>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`).join('')}</div></section>`;
+  } catch (error) { return ''; }
+}
+async function withVideos(response, env) {
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  const markup = await videoMarkup(env); if (!markup) return response;
+  const html = await response.text(); if (html.includes('data-video-track')) return new Response(html, response);
+  const updated = html.replace('</main>', `${markup}</main>`);
+  return new Response(updated, response);
+}
 async function publicNamePage(request, env, url) {
   const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
   const slug = decodeURIComponent(match[1]); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
@@ -136,7 +169,7 @@ export default { async fetch(request, env) {
     const user = await sessionUser(request, env);
     if (!user && !url.pathname.startsWith('/oshxona/login')) return Response.redirect(`${url.origin}/oshxona/login`, 302);
   }
-  if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return dynamic; }
-  if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return dynamic; }
-  return env.ASSETS.fetch(request);
+  if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
+  if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
+  return withVideos(await env.ASSETS.fetch(request), env);
 } };
