@@ -67,6 +67,23 @@ async function yandexMetrikaReport(env) {
   const daily = (dates.length ? dates : Array.from({ length: Math.max(...series.map((items) => items.length), 0) }, () => ({}))).map((dimension, index) => ({ date: dimension?.[0]?.name || '', users: Number(series[0]?.[index] || 0), visits: Number(series[1]?.[index] || 0), pageViews: Number(series[2]?.[index] || 0) }));
   return { configured: true, counterId, period: '7days', users: totals[0] || 0, visits: totals[1] || 0, pageViews: totals[2] || 0, daily, sampled: Boolean(data.sampled), dataLag: data.data_lag || 0 };
 }
+async function seedBuiltInArticles(env) {
+  const now = new Date().toISOString();
+  const content = `Ism tanlashda oilangiz uchun muhim bo‘lgan ma’no, qulay talaffuz va yozilishni birgalikda ko‘rib chiqing. Quyidagi oddiy tartib variantlarni solishtirishga yordam beradi.
+
+Avval kichik ro‘yxat tuzing
+Bir necha yoqqan ismni tanlanganlarga qo‘shing. Har birining ma’nosini o‘qing va sizga aynan nimasi yoqqanini yozib qo‘ying. Ma’nosi muhim bo‘lsa, uning manbasi borligini ham tekshiring.
+
+Familiya bilan birga ayting
+Ismni familiya bilan ovoz chiqarib aytib ko‘ring. Kundalik murojaatda talaffuzi sizga qulaymi? Oila a’zolari uni qanday qisqartirishini ham muhokama qilishingiz mumkin.
+
+Yozilish variantlarini solishtiring
+Lotin va kirill yozuvida ishlatadigan shaklingizni oldindan kelishib oling. Bir ism turli tillarda turlicha yozilishi mumkin; o‘xshash yozilgan barcha ismlar bir xil ma’noni anglatmaydi.
+
+Tanlovni birgalikda muhokama qiling
+Yoqtirgan ismingiz sahifasini Telegram orqali yaqinlaringizga yuborishingiz mumkin. Tanlanganlar shu brauzerda saqlanadi, shuning uchun yakuniy ro‘yxatingizni alohida yozib qo‘yish foydali.`;
+  await env.DB.prepare('INSERT OR IGNORE INTO articles (id, slug, title, excerpt, content, category, cover_image, status, seo_title, seo_description, author_email, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind('builtin-ism-tanlash', 'ism-tanlash', 'Farzandga ism tanlash', 'Ism ma’nosi, talaffuzi va yozilishini solishtirish bo‘yicha amaliy yo‘riqnoma.', content, 'Ota-onalar uchun', '', 'published', 'Farzandga ism tanlash: amaliy yo‘riqnoma | Bolagaism.uz', 'Ismlarni ma’nosi, talaffuzi va yozilishi bo‘yicha solishtirish uchun amaliy yo‘riqnoma.', 'system', now, now).run();
+}
 async function authApi(request, env, url) {
   if (!env.DB) return json({ error: 'Admin database is not configured yet' }, 503);
   if (request.method === 'GET' && url.pathname === '/api/oshxona/auth/status') {
@@ -111,6 +128,7 @@ async function api(request, env) {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS articles (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT '', cover_image TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','review','published','archived')), seo_title TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '', author_email TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status)`).run();
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS article_revisions (id INTEGER PRIMARY KEY AUTOINCREMENT, article_id TEXT NOT NULL, snapshot_json TEXT NOT NULL, action TEXT NOT NULL, editor_email TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+    await seedBuiltInArticles(env);
   }
   if (videosApi) {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS videos (id TEXT PRIMARY KEY, video_id TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published','archived')), sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
