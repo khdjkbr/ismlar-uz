@@ -83,6 +83,10 @@ async function api(request, env) {
     const nextOffset = offset + batch.length;
     return json({ imported: batch.length, offset, nextOffset, total: names.length, done: nextOffset >= names.length });
   }
+  if (request.method === 'GET' && url.pathname === '/api/oshxona/names-lite') {
+    const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url))); const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s); if (!match) return json({ error: 'Names data is unavailable' }, 503);
+    const all = JSON.parse(match[1]); const q = (url.searchParams.get('q') || '').trim().toLowerCase(); const filtered = all.filter((item) => !q || String(item.l || '').toLowerCase().includes(q) || String(item.k || '').toLowerCase().includes(q)).slice(0, 100); const rows = filtered.map((item) => ({ id: String(item.id), slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, origin: item.lang || '', meaning: item.m || '', variants: item.k || '', status: 'published', seo_description: `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`, updated_at: '' })); return json({ user: email, rows, counts: { total: all.length, published: all.length, review: 0, draft: 0 }, fallback: true });
+  }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/names') {
     const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
     if (q) { where.push('(name LIKE ? OR slug LIKE ?)'); args.push(`%${q}%`, `%${q}%`); } if (status) { where.push('status = ?'); args.push(status); }
