@@ -68,3 +68,29 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires_at ON admin_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS articles (
+  id TEXT PRIMARY KEY,
+  slug TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  excerpt TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT '',
+  cover_image TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'review', 'published', 'archived')),
+  seo_title TEXT NOT NULL DEFAULT '',
+  seo_description TEXT NOT NULL DEFAULT '',
+  author_email TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  published_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
+CREATE TABLE IF NOT EXISTS article_revisions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  article_id TEXT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  snapshot_json TEXT NOT NULL,
+  action TEXT NOT NULL,
+  editor_email TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
