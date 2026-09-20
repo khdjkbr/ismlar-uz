@@ -197,9 +197,9 @@ async function api(request, env) {
     if (!title || !/^[A-Za-z0-9_-]{6,20}$/.test(videoId)) return json({ error: 'Укажите название и корректный YouTube ID' }, 400);
     const id = url.pathname.split('/').pop(); const now = new Date().toISOString(); const status = body.status || 'draft'; const order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0;
     if (!['draft', 'published', 'archived'].includes(status)) return json({ error: 'Некорректный статус' }, 400);
-    if (request.method === 'POST') { const newId = crypto.randomUUID(); await env.DB.prepare('INSERT INTO videos (id, video_id, title, description, status, sort_order, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, videoId, title, String(body.description || '').trim(), status, order, now, status === 'published' ? now : null).run(); return json({ id: newId }, 201); }
+    if (request.method === 'POST') { const newId = crypto.randomUUID(); await env.DB.prepare('INSERT INTO videos (id, video_id, title, description, status, sort_order, updated_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, videoId, title, String(body.description || '').trim(), status, order, now, status === 'published' ? now : null).run(); if (status === 'published') await submitIndexNow(['/video/' + videoId + '/']); return json({ id: newId }, 201); }
     const previous = await env.DB.prepare('SELECT id FROM videos WHERE id = ?').bind(id).first(); if (!previous) return json({ error: 'Video not found' }, 404);
-    await env.DB.prepare('UPDATE videos SET video_id=?, title=?, description=?, status=?, sort_order=?, updated_at=?, published_at=CASE WHEN ? = \'published\' THEN COALESCE(published_at, ?) ELSE published_at END WHERE id=?').bind(videoId, title, String(body.description || '').trim(), status, order, now, status, now, id).run(); return json({ id });
+    await env.DB.prepare('UPDATE videos SET video_id=?, title=?, description=?, status=?, sort_order=?, updated_at=?, published_at=CASE WHEN ? = \'published\' THEN COALESCE(published_at, ?) ELSE published_at END WHERE id=?').bind(videoId, title, String(body.description || '').trim(), status, order, now, status, now, id).run(); if (status === 'published') await submitIndexNow(['/video/' + videoId + '/']); return json({ id });
   }
   if ((request.method === 'POST' || request.method === 'PATCH') && url.pathname.startsWith('/api/oshxona/articles')) {
     const body = await request.json(); if (!body.title) return json({ error: 'Title is required' }, 400); const id = url.pathname.split('/').pop(); const now = new Date().toISOString();
@@ -222,7 +222,7 @@ async function videoMarkup(env) {
   try {
     const rows = (await env.DB.prepare("SELECT video_id, title, description FROM videos WHERE status='published' ORDER BY sort_order ASC, published_at DESC LIMIT 12").all()).results || [];
     if (!rows.length) return '';
-    return `<section class="video-carousel" aria-label="Foydali videolar"><div class="video-carousel-head"><div><span class="eyebrow">Video tavsiyalar</span></div><div class="video-carousel-controls"><button type="button" class="video-scroll" data-video-scroll="prev" aria-label="Oldingi videolar">←</button><button type="button" class="video-scroll" data-video-scroll="next" aria-label="Keyingi videolar">→</button></div></div><div class="video-track" data-video-track>${rows.map((row) => `<article class="video-card"><a class="video-thumb" href="https://www.youtube.com/watch?v=${encodeURIComponent(row.video_id)}" target="_blank" rel="noopener" data-video-id="${escapeHtml(row.video_id)}" aria-label="${escapeHtml(row.title)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h3>${escapeHtml(row.title)}</h3>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`).join('')}</div></section>`;
+    return `<section class="video-carousel" aria-label="Foydali videolar"><div class="video-carousel-head"><div><span class="eyebrow">Video tavsiyalar</span></div><div class="video-carousel-controls"><button type="button" class="video-scroll" data-video-scroll="prev" aria-label="Oldingi videolar">←</button><button type="button" class="video-scroll" data-video-scroll="next" aria-label="Keyingi videolar">→</button></div></div><div class="video-track" data-video-track>${rows.map((row) => `<article class="video-card"><a class="video-thumb" href="/video/${encodeURIComponent(row.video_id)}/" data-video-id="${escapeHtml(row.video_id)}" aria-label="${escapeHtml(row.title)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h3><a href="/video/${encodeURIComponent(row.video_id)}/">${escapeHtml(row.title)}</a></h3>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`).join('')}</div></section>`;
   } catch (error) { return ''; }
 }
 async function articleMarkup(env) {
@@ -243,6 +243,19 @@ async function withVideos(response, env) {
   if (markup && !updated.includes('data-video-track')) updated = updated.replace('</main>', `${markup}</main>`);
   if (updated === html) return response;
   return new Response(updated, response);
+}
+async function publicVideoPage(request, env, url) {
+  if (!env.DB) return null;
+  const match = url.pathname.match(/^\/video\/([^/]+)\/?$/); if (!match) return null;
+  const videoId = decodeURIComponent(match[1]);
+  const row = await env.DB.prepare("SELECT video_id, title, description, published_at FROM videos WHERE video_id = ? AND status='published'").bind(videoId).first();
+  if (!row) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+  const title = `${row.title} | Bolagaism.uz`;
+  const description = row.description || `Видео о выборе имени для ребёнка — ${row.title}.`;
+  const canonical = `https://bolagaism.uz/video/${encodeURIComponent(row.video_id)}/`;
+  const content = `<article class="paper readable video-page"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a> <span>›</span> <a href="/">Video tavsiyalar</a> <span>›</span> <span>${escapeHtml(row.title)}</span></nav><span class="eyebrow">Video tavsiyalar</span><div class="video-embed"><iframe src="https://www.youtube.com/embed/${encodeURIComponent(row.video_id)}?rel=0" title="${escapeHtml(row.title)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><h1>${escapeHtml(row.title)}</h1><p class="meaning-lead">${escapeHtml(description)}</p></article>`;
+  const html = `<!doctype html><html lang="uz"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:type" content="video.other"><meta property="og:url" content="${canonical}"><meta property="og:image" content="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css"></head><body><header class="sticky-header"><div class="header-container"><div class="brand-row"><a class="brand-logo" href="/"><span class="logo-icon">🍼</span><span class="logo-text">BolagaIsm<span class="logo-tld">.uz</span></span></a></div></div></header><main id="main" class="page-shell">${content}</main><footer class="site-footer"><div class="container"><strong>Bolagaism.uz</strong><p>Farzandingiz uchun ma'noli ism tanlang.</p><nav class="footer-links"><a href="/ogil-bola-ismlari/">O'g'il bolalar</a><a href="/qiz-bola-ismlari/">Qiz bolalar</a><a href="/maqolalar/">Maqolalar</a></nav></div></footer></body></html>`;
+  return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
 async function publicNamePage(request, env, url) {
   const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
@@ -278,6 +291,7 @@ export default { async fetch(request, env) {
     if (!user && !url.pathname.startsWith('/oshxona/login')) return Response.redirect(`${url.origin}/oshxona/login`, 302);
     return env.ASSETS.fetch(request);
   }
+  if (url.pathname.startsWith('/video/')) { const dynamic = await publicVideoPage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   return withVideos(await env.ASSETS.fetch(request), env);
