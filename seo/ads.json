@@ -1,11 +1,12 @@
 {
-  "publisher": "ca-pub-9145965401414117",
+  "network": "yandex",
+  "ads_txt": "",
   "consent_setup_verified": false,
   "placements": {
-    "home_after_guide": {"slot": "2415614576", "size": "banner"},
-    "catalog_after_12": {"slot": "4469108443", "size": "banner"},
-    "catalog_after_36": {"slot": null, "size": "banner"},
-    "name_after_sources": {"slot": null, "size": "rectangle"},
-    "article_after_section": {"slot": null, "size": "banner"}
+    "home_after_guide": {"block_id": null, "size": "banner"},
+    "catalog_after_12": {"block_id": null, "size": "banner"},
+    "catalog_after_36": {"block_id": null, "size": "banner"},
+    "name_after_sources": {"block_id": null, "size": "rectangle"},
+    "article_after_section": {"block_id": null, "size": "banner"}
   }
 }

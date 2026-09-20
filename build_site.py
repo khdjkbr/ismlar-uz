@@ -57,9 +57,9 @@ class Builder:
         if ads == 'live' and (not production or not self.ads['consent_setup_verified']):
             raise ValueError('Live ads require --production and a verified certified CMP/account setup in seo/ads.json.')
         if ads == 'live':
-            slots = [p['slot'] for p in self.ads['placements'].values()]
-            if any(not s or not re.fullmatch(r'\d+', s) for s in slots) or len(slots) != len(set(slots)):
-                raise ValueError('Configure a distinct real AdSense slot ID for every placement before enabling live ads.')
+            blocks = [p.get('block_id') for p in self.ads['placements'].values()]
+            if self.ads.get('network') != 'yandex' or any(not s or not re.fullmatch(r'R-A-[A-Za-z0-9_-]+', s) for s in blocks) or len(blocks) != len(set(blocks)):
+                raise ValueError('Configure a distinct Yandex RSЯ block ID for every placement before enabling live ads.')
         self.editorial = json.loads((ROOT / 'seo/editorial.json').read_text(encoding='utf-8'))
         self.routes = {}
         used = set()
@@ -135,8 +135,8 @@ class Builder:
             return ''
         config = self.ads['placements'][placement]
         placeholder = '<div class="ad-placeholder">Reklama joyi<small>Namuna · haqiqiy reklama emas</small></div>' if self.ads_mode == 'preview' else ''
-        slot = f' data-slot="{esc(config["slot"])}"' if self.ads_mode == 'live' else ''
-        return f'<aside class="ad-placement" aria-label="Reklama" data-placement="{placement}"{slot}><span class="ad-label">Reklama</span><div class="ad-space {config["size"]}">{placeholder}</div></aside>'
+        block_id = f' data-block-id="{esc(config["block_id"])}"' if self.ads_mode == 'live' else ''
+        return f'<aside class="ad-placement" aria-label="Reklama" data-placement="{placement}"{block_id}><span class="ad-label">Reklama</span><div class="ad-space {config["size"]}">{placeholder}</div></aside>'
 
     def head(self, title, description, path, noindex=False, crumbs=None, main_entity=None, modified=None):
         noindex = noindex or not self.production
@@ -155,7 +155,6 @@ class Builder:
 <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
 <script type="application/ld+json">{js_json(schema)}</script>
-{'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9145965401414117" crossorigin="anonymous"></script>' if self.production else ''}
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-WMMETC5LY8"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag('js',new Date());gtag('config','G-WMMETC5LY8');</script>
 <script>(function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments)}};m[i].l=1*new Date();k=e.createElement(t);a=e.getElementsByTagName(t)[0];k.async=1;k.src=r;a.parentNode.insertBefore(k,a)}})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');ym(112365590,'init',{{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true}});</script>'''
@@ -312,13 +311,14 @@ class Builder:
             self.page('/' + filename, html.unescape(title), html.unescape(title) + '. Bolagaism.uz haqida ma’lumot.', body)
         for src, dest in [('preview.css', 'seo.css'), ('design.css', 'design.css'), ('page.js', 'page.js'), ('ads.js', 'ads.js')]:
             self.write(dest, (ROOT / 'seo' / src).read_text(encoding='utf-8'))
-        self.write('ads-config.js', 'window.BOLAGA_ADS = ' + js_json({'mode': self.ads_mode, 'publisher': self.ads['publisher'], 'consentVerified': self.ads['consent_setup_verified']}) + ';')
+        self.write('ads-config.js', 'window.BOLAGA_ADS = ' + js_json({'mode': self.ads_mode, 'network': self.ads.get('network', 'yandex'), 'consentVerified': self.ads['consent_setup_verified']}) + ';')
         self.write('routes.js', 'window.NAME_ROUTES = ' + js_json(self.routes) + ';')
         self.write('routes.json', js_json(self.routes))
         self.write('names.json', js_json(self.names))
         self.write('names_data.js', 'window.ALL_NAMES = ' + js_json(self.names) + ';')
         self.write('search-index.json', js_json([{'id': n['id'], 'key': key(n), 'l': n['l'], 'k': n.get('k', ''), 'g': n['g'], 'origin': n.get('lang', ''), 'm': n.get('m', ''), 'url': self.href(n)} for n in self.unique]))
-        self.write('ads.txt', 'google.com, ' + self.ads['publisher'].removeprefix('ca-') + ', DIRECT, f08c47fec0942fa0\n')
+        if self.ads_mode == 'live' and self.ads.get('ads_txt'):
+            self.write('ads.txt', self.ads['ads_txt'] + '\n')
         self.write('robots.txt', 'User-agent: *\nAllow: /\n\nSitemap: ' + BASE + '/sitemap.xml\n')
         self.write('.nojekyll', '')
         self.write('favicon.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path d="M27 12h10l2 7H25l2-7Z" fill="#9CC9F5"/><path d="M25 18h14l2 5H23l2-5Z" fill="#F7C7D8"/><path d="M24 23h16v28H24z" rx="7" fill="#FFDDE7" stroke="#E7A9C0" stroke-width="2"/><path d="M28 29h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M28 38h8" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M30 12c0-3 4-3 4 0" fill="none" stroke="#F4B85E" stroke-width="2" stroke-linecap="round"/></svg>')
