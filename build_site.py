@@ -228,7 +228,7 @@ class Builder:
             share = 'https://t.me/share/url?' + urlencode({'url': BASE + path, 'text': f'{item["l"]} — {entry["meaning"]}'})
             metadata = f'<dl class="detail-facts"><div class="detail-fact fact-gender"><dt>Jinsi</dt><dd>{"O‘g‘il bola" if item["g"] == "m" else "Qiz bola"}</dd></div><div class="detail-fact fact-origin"><dt>Kelib chiqishi</dt><dd>{esc(entry["origin"])}</dd></div></dl>'
             if entry.get('k'):
-                metadata += f'<span>Kirillcha: {esc(entry["k"])}</span>'
+                metadata += f'<span class="name-kirilcha">Kirillcha: {esc(entry["k"])}</span>'
             body = f'''<article class="concept-detail"><div class="detail-banner"><span class="name-initial" aria-hidden="true">{esc(item['l'][0])}</span><h1><strong>{esc(item['l'])}</strong> ismining ma’nosi</h1>{metadata}</div><div class="detail-content"><p class="meaning-caption">Ma’nosi</p><p class="meaning-lead">{esc(entry['meaning'])}</p>
 <div class="detail-sections"><section><h2>Kelib chiqishi</h2><p>{esc(entry['note'])}</p></section><section><h2>Yozilish variantlari</h2><p>{esc(entry['variants'])}</p></section></div>
 <div class="action-row action-row-bottom"><button data-save-name="{esc(k)}" data-name-label="{esc(item['l'])}" aria-pressed="false">♡ Tanlanganlarga qo'shish</button><a class="primary" href="{esc(share)}" target="_blank" rel="noopener">Telegramda ulashish</a></div><div class="status-message" role="status" data-save-status></div></article>'''
