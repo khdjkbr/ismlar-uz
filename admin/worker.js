@@ -96,7 +96,7 @@ async function api(request, env) {
     const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'draft') AS draft FROM videos").first(); return json({ user: email, rows: rows.results || [], counts });
   }
   if ((request.method === 'POST' || request.method === 'PATCH') && url.pathname.startsWith('/api/oshxona/videos')) {
-    const body = await request.json(); const title = String(body.title || '').trim(); const videoId = String(body.video_id || '').trim();
+    const body = await request.json(); const title = String(body.title || '').trim(); const rawVideo = String(body.video_id || '').trim(); const videoId = (rawVideo.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,20})/) || [null, rawVideo])[1];
     if (!title || !/^[A-Za-z0-9_-]{6,20}$/.test(videoId)) return json({ error: 'Укажите название и корректный YouTube ID' }, 400);
     const id = url.pathname.split('/').pop(); const now = new Date().toISOString(); const status = body.status || 'draft'; const order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0;
     if (!['draft', 'published', 'archived'].includes(status)) return json({ error: 'Некорректный статус' }, 400);
