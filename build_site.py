@@ -239,7 +239,7 @@ class Builder:
                 body = body.replace('<section><h2>Yozilish variantlari</h2><p></p></section>', '')
             body += self.ad('name_after_sources')
             related = [self.by_key[r] for r in self.editorial if self.by_key[r]['g'] == item['g'] and r != k][:3]
-            body += '<section><h2>Yana ko‘rib chiqing</h2><div class="related-grid">' + ''.join(self.tile(n) for n in related) + '</div></section>'
+            body += '<section class="name-related"><h2>Yana ko‘rib chiqing</h2><div class="related-grid">' + ''.join(self.tile(n) for n in related) + '</div></section>'
             body += f'<p><a href="/{slug}/{letter_slug(first_letter(item["l"]))}/">{esc(first_letter(item["l"]))} harfi bilan boshlanuvchi boshqa ismlar →</a></p>'
             entity = {'@type': 'DefinedTerm', 'name': item['l'], 'description': entry['meaning'], 'inDefinedTermSet': {'@type': 'DefinedTermSet', 'name': 'Bolagaism.uz ismlar katalogi', 'url': BASE + '/' + slug + '/'}}
             indexed = k in self.editorial or self.source_policy.get('global_source_applies', False)
