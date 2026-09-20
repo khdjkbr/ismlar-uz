@@ -158,7 +158,7 @@ async function withVideos(response, env) {
   const [markup, articles] = await Promise.all([videoMarkup(env), articleMarkup(env)]);
   const html = await response.text();
   let updated = html;
-  if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="article-teasers">[\s\S]*?<\/section>/, articles);
+  if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="[^"]*article-teasers[^"]*">[\s\S]*?<\/section>/, articles);
   if (markup && !updated.includes('data-video-track')) updated = updated.replace('</main>', `${markup}</main>`);
   if (updated === html) return response;
   return new Response(updated, response);
