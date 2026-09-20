@@ -32,7 +32,10 @@ async function googleAccessToken(env) {
   const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(signingInput));
   const assertion = signingInput + '.' + b64url(new Uint8Array(signature));
   const response = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=' + encodeURIComponent(assertion) });
-  if (!response.ok) throw new Error('Google authorization failed');
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Google authorization failed (${response.status}): ${details.slice(0, 240)}`);
+  }
   const data = await response.json(); return data.access_token;
 }
 async function googleAnalyticsReport(env) {
@@ -40,7 +43,10 @@ async function googleAnalyticsReport(env) {
   if (missing.length) return { configured: false, missing };
   const token = await googleAccessToken(env);
   const response = await fetch('https://analyticsdata.googleapis.com/v1beta/properties/' + encodeURIComponent(env.GA_PROPERTY_ID) + ':runReport', { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }], metrics: [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }] }) });
-  if (!response.ok) throw new Error('Google Analytics report failed');
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Google Analytics report failed (${response.status}): ${details.slice(0, 240)}`);
+  }
   const data = await response.json(); const values = (data.rows?.[0]?.metricValues || []).map((item) => Number(item.value || 0));
   return { configured: true, period: '7days', activeUsers: values[0] || 0, sessions: values[1] || 0, pageViews: values[2] || 0 };
 }
@@ -79,7 +85,7 @@ async function api(request, env) {
   const articlesApi = url.pathname.startsWith('/api/oshxona/articles');
   const videosApi = url.pathname.startsWith('/api/oshxona/videos');
   if (request.method === 'GET' && url.pathname === '/api/oshxona/analytics/google') {
-    try { return json(await googleAnalyticsReport(env)); } catch (error) { return json({ configured: true, error: 'Google Analytics ma’lumotlarini olishda xatolik yuz berdi.' }, 502); }
+    try { return json(await googleAnalyticsReport(env)); } catch (error) { return json({ configured: true, error: `Google Analytics API: ${error.message}` }, 502); }
   }
   if (articlesApi) {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS articles (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT '', cover_image TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','review','published','archived')), seo_title TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '', author_email TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
