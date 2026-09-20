@@ -122,6 +122,17 @@
   window.addEventListener('storage', () => loadFavorites().then(() => { updateButtons(); return renderFavorites(); }).catch(() => {}));
   window.addEventListener('focus', () => loadFavorites().then(() => { updateButtons(); return renderFavorites(); }).catch(() => {}));
 
+  document.querySelectorAll('[data-video-track]').forEach(track => {
+    const carousel = track.closest('.video-carousel');
+    if (!carousel) return;
+    carousel.querySelectorAll('[data-video-scroll]').forEach(button => {
+      button.addEventListener('click', () => {
+        const direction = button.dataset.videoScroll === 'prev' ? -1 : 1;
+        track.scrollBy({left: direction * Math.max(track.clientWidth * 0.86, 260), behavior: 'smooth'});
+      });
+    });
+  });
+
   const input = document.getElementById('name-search');
   if (input) {
     const results = document.getElementById('search-results');
