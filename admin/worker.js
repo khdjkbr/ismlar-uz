@@ -42,13 +42,14 @@ async function googleAnalyticsReport(env) {
   const missing = ['GA_PROPERTY_ID', 'GA_CLIENT_EMAIL', 'GA_PRIVATE_KEY'].filter((key) => !env[key]);
   if (missing.length) return { configured: false, missing };
   const token = await googleAccessToken(env);
-  const response = await fetch('https://analyticsdata.googleapis.com/v1beta/properties/' + encodeURIComponent(env.GA_PROPERTY_ID) + ':runReport', { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }], metrics: [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }] }) });
+  const response = await fetch('https://analyticsdata.googleapis.com/v1beta/properties/' + encodeURIComponent(env.GA_PROPERTY_ID) + ':runReport', { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }], dimensions: [{ name: 'date' }], metrics: [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }] }) });
   if (!response.ok) {
     const details = await response.text();
     throw new Error(`Google Analytics report failed (${response.status}): ${details.slice(0, 240)}`);
   }
-  const data = await response.json(); const values = (data.rows?.[0]?.metricValues || []).map((item) => Number(item.value || 0));
-  return { configured: true, period: '7days', activeUsers: values[0] || 0, sessions: values[1] || 0, pageViews: values[2] || 0 };
+  const data = await response.json(); const daily = (data.rows || []).map((row) => { const values = (row.metricValues || []).map((item) => Number(item.value || 0)); return { date: row.dimensionValues?.[0]?.value || '', activeUsers: values[0] || 0, sessions: values[1] || 0, pageViews: values[2] || 0 }; });
+  const totals = daily.reduce((sum, row) => ({ activeUsers: sum.activeUsers + row.activeUsers, sessions: sum.sessions + row.sessions, pageViews: sum.pageViews + row.pageViews }), { activeUsers: 0, sessions: 0, pageViews: 0 });
+  return { configured: true, period: '7days', ...totals, daily };
 }
 async function authApi(request, env, url) {
   if (!env.DB) return json({ error: 'Admin database is not configured yet' }, 503);
