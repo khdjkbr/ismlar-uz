@@ -51,6 +51,27 @@ async function authApi(request, env, url) {
 async function api(request, env) {
   const url = new URL(request.url); const authResponse = await authApi(request, env, url); if (authResponse) return authResponse;
   const email = await sessionUser(request, env); if (!email) return json({ error: 'Authentication required' }, 401);
+  if (request.method === 'POST' && url.pathname === '/api/oshxona/import') {
+    const offset = Math.max(0, Number(url.searchParams.get('offset') || 0));
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || 200)));
+    const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url)));
+    const sourceText = await source.text();
+    const match = sourceText.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s);
+    if (!match) return json({ error: 'Names data is unavailable' }, 503);
+    const names = JSON.parse(match[1]);
+    const routeResponse = await env.ASSETS.fetch(new Request(new URL('/routes.json', request.url)));
+    const routes = await routeResponse.json();
+    const batch = names.slice(offset, offset + limit);
+    const statements = batch.map((item) => {
+      const key = `${item.g}:${String(item.l).toLowerCase()}`;
+      const route = routes[key] || `/ism/${String(item.l).toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, '')}/`;
+      const slug = route.replace(/^\/ism\//, '').replace(/\/$/, '');
+      return env.DB.prepare('INSERT OR IGNORE INTO names (id, slug, name, gender, meaning, origin, source, status, seo_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(String(item.id), slug, item.l, item.g, item.m || '', item.lang || '', "«O'zbek ismlari ma'nosi» — Begmatov E.A. O'zbekiston Milliy Ensiklopediyasi. Davlat ilmiy nashriyoti, 2007.", 'published', `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`);
+    });
+    if (statements.length) await env.DB.batch(statements);
+    const nextOffset = offset + batch.length;
+    return json({ imported: batch.length, offset, nextOffset, total: names.length, done: nextOffset >= names.length });
+  }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/names') {
     const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
     if (q) { where.push('(name LIKE ? OR slug LIKE ?)'); args.push(`%${q}%`, `%${q}%`); } if (status) { where.push('status = ?'); args.push(status); }
