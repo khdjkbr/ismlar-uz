@@ -21,7 +21,7 @@ async function sessionCookie(email, env) {
 }
 function b64url(bytes) { let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte); return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''); }
 function textB64url(value) { return b64url(new TextEncoder().encode(value)); }
-function pemToBuffer(pem) { const clean = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, ''); const binary = atob(clean); return Uint8Array.from(binary, (c) => c.charCodeAt(0)).buffer; }
+function pemToBuffer(pem) { const normalized = String(pem).replace(/\\n/g, '\n').replace(/\\r/g, ''); const clean = normalized.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, ''); const binary = atob(clean); return Uint8Array.from(binary, (c) => c.charCodeAt(0)).buffer; }
 async function googleAccessToken(env) {
   if (!env.GA_CLIENT_EMAIL || !env.GA_PRIVATE_KEY) return null;
   const now = Math.floor(Date.now() / 1000);
