@@ -329,7 +329,7 @@ class Builder:
         admin_dir = ROOT / 'admin'
         admin_out = self.out / 'oshxona'
         admin_out.mkdir(parents=True, exist_ok=True)
-        for admin_asset in ('index.html', 'admin.css', 'admin.js'):
+        for admin_asset in ('index.html', 'login.html', 'admin.css', 'admin.js'):
             source = admin_dir / admin_asset
             if source.exists():
                 target = admin_out / admin_asset

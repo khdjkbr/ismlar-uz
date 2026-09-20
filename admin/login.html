@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Вход — Oshxona</title><link rel="stylesheet" href="/oshxona/admin.css"></head>
+<body class="auth-page">
+<main class="auth-card">
+  <div class="admin-brand"><span>🍼</span><strong>Oshxona</strong><small>Bolagaism.uz</small></div>
+  <h1 id="auth-title">Вход в админ-панель</h1>
+  <p id="auth-lead">Управление каталогом имён доступно только владельцу сайта.</p>
+  <form id="auth-form">
+    <label>Email<input id="auth-email" type="email" value="khdjkbr@yandex.com" autocomplete="username" required></label>
+    <label>Пароль<input id="auth-password" type="password" minlength="10" autocomplete="current-password" required></label>
+    <label id="auth-repeat-wrap" hidden>Повторите пароль<input id="auth-repeat" type="password" minlength="10" autocomplete="new-password"></label>
+    <button class="primary" id="auth-submit">Войти</button>
+    <p class="form-status" id="auth-status" role="status"></p>
+  </form>
+</main>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  let setup = false;
+  try { const status = await fetch('/api/oshxona/auth/status'); setup = (await status.json()).setupRequired; } catch {}
+  if (setup) { $('auth-title').textContent = 'Первичная настройка'; $('auth-lead').textContent = 'Создайте пароль владельца. Используйте не менее 10 символов.'; $('auth-repeat-wrap').hidden = false; $('auth-submit').textContent = 'Создать доступ'; }
+  $('auth-form').addEventListener('submit', async (event) => {
+    event.preventDefault(); $('auth-status').textContent = '';
+    const password = $('auth-password').value;
+    if (setup && password !== $('auth-repeat').value) { $('auth-status').textContent = 'Пароли не совпадают'; return; }
+    const endpoint = setup ? '/api/oshxona/auth/setup' : '/api/oshxona/auth/login';
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email: $('auth-email').value, password}) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Не удалось выполнить вход');
+      location.href = '/oshxona/';
+    } catch (error) { $('auth-status').textContent = error.message; }
+  });
+})();
+</script>
+</body></html>
