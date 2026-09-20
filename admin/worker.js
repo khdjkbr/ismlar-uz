@@ -36,7 +36,8 @@ async function googleAccessToken(env) {
   const data = await response.json(); return data.access_token;
 }
 async function googleAnalyticsReport(env) {
-  if (!env.GA_PROPERTY_ID || !env.GA_CLIENT_EMAIL || !env.GA_PRIVATE_KEY) return { configured: false };
+  const missing = ['GA_PROPERTY_ID', 'GA_CLIENT_EMAIL', 'GA_PRIVATE_KEY'].filter((key) => !env[key]);
+  if (missing.length) return { configured: false, missing };
   const token = await googleAccessToken(env);
   const response = await fetch('https://analyticsdata.googleapis.com/v1beta/properties/' + encodeURIComponent(env.GA_PROPERTY_ID) + ':runReport', { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }], metrics: [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }] }) });
   if (!response.ok) throw new Error('Google Analytics report failed');
