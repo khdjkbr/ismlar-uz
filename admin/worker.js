@@ -80,10 +80,28 @@ async function api(request, env) {
   }
   if (request.method === 'POST' || request.method === 'PATCH') {
     const body = await request.json(); if (!body.name || !['m', 'f'].includes(body.gender)) return json({ error: 'Name and gender are required' }, 400); const id = url.pathname.split('/').pop(); const now = new Date().toISOString();
-    if (request.method === 'POST') { const newId = crypto.randomUUID(); const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, ''); await env.DB.prepare('INSERT INTO names (id, slug, name, gender, meaning, origin, variants, status, seo_description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, slug, body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('created', 'name', newId, email, JSON.stringify({ name: body.name })).run(); return json({ id: newId }, 201); }
-    await env.DB.prepare('UPDATE names SET name = ?, gender = ?, meaning = ?, origin = ?, variants = ?, status = ?, seo_description = ?, updated_at = ? WHERE id = ?').bind(body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now, id).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('updated', 'name', id, email, JSON.stringify({ name: body.name, status: body.status })).run(); return json({ id });
+    if (request.method === 'POST') { const newId = crypto.randomUUID(); const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, ''); await env.DB.prepare('INSERT INTO names (id, slug, name, gender, meaning, origin, variants, status, seo_description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, slug, body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now).run(); const snapshot = JSON.stringify({ id: newId, slug, ...body }); await env.DB.prepare('INSERT INTO name_revisions (name_id, snapshot_json, action, editor_email) VALUES (?, ?, ?, ?)').bind(newId, snapshot, 'created', email).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('created', 'name', newId, email, JSON.stringify({ name: body.name })).run(); return json({ id: newId }, 201); }
+    const previous = await env.DB.prepare('SELECT * FROM names WHERE id = ?').bind(id).first();
+    if (!previous) return json({ error: 'Name not found' }, 404);
+    await env.DB.prepare('INSERT INTO name_revisions (name_id, snapshot_json, action, editor_email) VALUES (?, ?, ?, ?)').bind(id, JSON.stringify(previous), body.status === 'published' && previous.status !== 'published' ? 'published' : 'updated', email).run();
+    await env.DB.prepare('UPDATE names SET name = ?, gender = ?, meaning = ?, origin = ?, variants = ?, status = ?, seo_description = ?, updated_at = ?, published_at = CASE WHEN ? = \'published\' THEN COALESCE(published_at, ?) ELSE published_at END WHERE id = ?').bind(body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now, body.status || 'draft', now, id).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('updated', 'name', id, email, JSON.stringify({ name: body.name, status: body.status })).run(); return json({ id });
   }
   return json({ error: 'Not found' }, 404);
+}
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+async function publicNamePage(request, env, url) {
+  const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
+  const slug = decodeURIComponent(match[1]); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
+  const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null; let html = await asset.text();
+  const description = row.seo_description || `${row.name} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`;
+  html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz</title>`);
+  html = html.replace(/(<meta name="description" content=")[^"]*("\s*\/>)/i, `$1${escapeHtml(description)}$2`);
+  html = html.replace(/(<meta property="og:title" content=")[^"]*("\/>)/i, `$1${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz$2`);
+  html = html.replace(/(<meta property="og:description" content=")[^"]*("\/>)/i, `$1${escapeHtml(description)}$2`);
+  html = html.replace(/<h1><strong>[^<]*<\/strong> ismining ma’nosi<\/h1>/i, `<h1><strong>${escapeHtml(row.name)}</strong> ismining ma’nosi</h1>`);
+  html = html.replace(/(<p class="meaning-lead">)[\s\S]*?(<\/p>)/i, `$1${escapeHtml(row.meaning)}$2`);
+  html = html.replace(/(<div class="detail-fact fact-origin">[\s\S]*?<dd>)[\s\S]*?(<\/dd>)/i, `$1${escapeHtml(row.origin)}$2`);
+  return new Response(html, { status: asset.status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
 export default { async fetch(request, env) {
   const url = new URL(request.url);
@@ -92,5 +110,6 @@ export default { async fetch(request, env) {
     const user = await sessionUser(request, env);
     if (!user && !url.pathname.startsWith('/oshxona/login')) return Response.redirect(`${url.origin}/oshxona/login`, 302);
   }
+  if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return dynamic; }
   return env.ASSETS.fetch(request);
 } };
