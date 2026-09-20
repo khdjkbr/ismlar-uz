@@ -86,8 +86,14 @@ async function api(request, env) {
   if (request.method === 'GET' && url.pathname === '/api/oshxona/names') {
     const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
     if (q) { where.push('(name LIKE ? OR slug LIKE ?)'); args.push(`%${q}%`, `%${q}%`); } if (status) { where.push('status = ?'); args.push(status); }
-    const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''; const rows = await env.DB.prepare(`SELECT id, slug, name, gender, origin, meaning, variants, status, seo_description, updated_at FROM names ${clause} ORDER BY updated_at DESC LIMIT 100`).bind(...args).all();
-    const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'review') AS review, SUM(status = 'draft') AS draft FROM names").first(); return json({ user: email, rows: rows.results || [], counts });
+    const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    try {
+      const rows = await Promise.race([env.DB.prepare(`SELECT id, slug, name, gender, origin, meaning, variants, status, seo_description, updated_at FROM names ${clause} ORDER BY updated_at DESC LIMIT 100`).bind(...args).all(), new Promise((_, reject) => setTimeout(() => reject(new Error('Names query timeout')), 5000))]);
+      const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'review') AS review, SUM(status = 'draft') AS draft FROM names").first(); return json({ user: email, rows: rows.results || [], counts });
+    } catch (error) {
+      const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url))); const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s); if (!match) return json({ error: 'Names data is unavailable' }, 503);
+      const all = JSON.parse(match[1]); const normalized = q.toLowerCase(); const filtered = all.filter((item) => (!normalized || String(item.l || '').toLowerCase().includes(normalized) || String(item.k || '').toLowerCase().includes(normalized)) && (!status || status === 'published')).slice(0, 100); const rows = filtered.map((item) => ({ id: String(item.id), slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, origin: item.lang || '', meaning: item.m || '', variants: item.k || '', status: 'published', seo_description: `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`, updated_at: '' })); return json({ user: email, rows, counts: { total: all.length, published: all.length, review: 0, draft: 0 }, fallback: true });
+    }
   }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/articles') {
     const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
