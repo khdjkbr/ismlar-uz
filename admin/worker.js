@@ -102,7 +102,7 @@ async function api(request, env) {
   if (request.method === 'GET' && url.pathname === '/api/oshxona/articles') {
     const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
     if (q) { where.push('(title LIKE ? OR slug LIKE ?)'); args.push(`%${q}%`, `%${q}%`); } if (status) { where.push('status = ?'); args.push(status); }
-    const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''; const rows = await env.DB.prepare(`SELECT id, slug, title, excerpt, category, status, seo_title, seo_description, updated_at, published_at FROM articles ${clause} ORDER BY updated_at DESC LIMIT 100`).bind(...args).all();
+    const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''; const rows = await env.DB.prepare(`SELECT id, slug, title, excerpt, category, cover_image, status, seo_title, seo_description, updated_at, published_at FROM articles ${clause} ORDER BY updated_at DESC LIMIT 100`).bind(...args).all();
     const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'review') AS review, SUM(status = 'draft') AS draft FROM articles").first(); return json({ user: email, rows: rows.results || [], counts });
   }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/videos') {
@@ -144,12 +144,23 @@ async function videoMarkup(env) {
     return `<section class="video-carousel" aria-labelledby="video-carousel-title"><div class="video-carousel-head"><div><span class="eyebrow">Video tavsiyalar</span><h2 id="video-carousel-title">Foydali videolar</h2></div><div class="video-carousel-controls"><button type="button" class="video-scroll" data-video-scroll="prev" aria-label="Oldingi videolar">←</button><button type="button" class="video-scroll" data-video-scroll="next" aria-label="Keyingi videolar">→</button></div></div><div class="video-track" data-video-track>${rows.map((row) => `<article class="video-card"><a class="video-thumb" href="https://www.youtube.com/watch?v=${encodeURIComponent(row.video_id)}" target="_blank" rel="noopener" data-video-id="${escapeHtml(row.video_id)}" aria-label="${escapeHtml(row.title)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h3>${escapeHtml(row.title)}</h3>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`).join('')}</div></section>`;
   } catch (error) { return ''; }
 }
+async function articleMarkup(env) {
+  if (!env.DB) return '';
+  try {
+    const rows = (await env.DB.prepare("SELECT slug, title, excerpt, cover_image FROM articles WHERE status='published' ORDER BY published_at DESC, updated_at DESC LIMIT 12").all()).results || [];
+    if (!rows.length) return '';
+    return `<section class="video-carousel article-carousel" aria-labelledby="article-carousel-title"><div class="video-carousel-head"><div><span class="eyebrow">Foydali maqolalar</span><h2 id="article-carousel-title">Ism tanlash bo‘yicha maqolalar</h2></div></div><div class="video-track article-track" data-article-track>${rows.map((row) => { const image = row.cover_image ? `<img src="${escapeHtml(row.cover_image)}" alt="${escapeHtml(row.title)}" loading="lazy">` : `<span class="article-placeholder" aria-hidden="true">📖</span>`; return `<article class="video-card article-card"><a class="video-thumb article-thumb" href="/maqolalar/${encodeURIComponent(row.slug)}/" aria-label="${escapeHtml(row.title)}">${image}</a><h3><a href="/maqolalar/${encodeURIComponent(row.slug)}/">${escapeHtml(row.title)}</a></h3>${row.excerpt ? `<p>${escapeHtml(row.excerpt)}</p>` : ''}</article>`; }).join('')}</div></section>`;
+  } catch (error) { return ''; }
+}
 async function withVideos(response, env) {
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
-  const markup = await videoMarkup(env); if (!markup) return response;
-  const html = await response.text(); if (html.includes('data-video-track')) return new Response(html, response);
-  const updated = html.replace('</main>', `${markup}</main>`);
+  const [markup, articles] = await Promise.all([videoMarkup(env), articleMarkup(env)]);
+  const html = await response.text();
+  let updated = html;
+  if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="article-teasers">[\s\S]*?<\/section>/, articles);
+  if (markup && !updated.includes('data-video-track')) updated = updated.replace('</main>', `${markup}</main>`);
+  if (updated === html) return response;
   return new Response(updated, response);
 }
 async function publicNamePage(request, env, url) {
