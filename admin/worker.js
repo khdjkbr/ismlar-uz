@@ -96,8 +96,8 @@ async function publicNamePage(request, env, url) {
   const description = row.seo_description || `${row.name} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`;
   html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz</title>`);
   html = html.replace(/(<meta name="description" content=")[^"]*("\s*\/>)/i, `$1${escapeHtml(description)}$2`);
-  html = html.replace(/(<meta property="og:title" content=")[^"]*("\/>)/i, `$1${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz$2`);
-  html = html.replace(/(<meta property="og:description" content=")[^"]*("\/>)/i, `$1${escapeHtml(description)}$2`);
+  html = html.replace(/(<meta property="og:title" content=")[^"]*("\s*\/?>)/i, `$1${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz$2`);
+  html = html.replace(/(<meta property="og:description" content=")[^"]*("\s*\/?>)/i, `$1${escapeHtml(description)}$2`);
   html = html.replace(/<h1><strong>[^<]*<\/strong> ismining ma’nosi<\/h1>/i, `<h1><strong>${escapeHtml(row.name)}</strong> ismining ma’nosi</h1>`);
   html = html.replace(/(<p class="meaning-lead">)[\s\S]*?(<\/p>)/i, `$1${escapeHtml(row.meaning)}$2`);
   html = html.replace(/(<div class="detail-fact fact-origin">[\s\S]*?<dd>)[\s\S]*?(<\/dd>)/i, `$1${escapeHtml(row.origin)}$2`);
