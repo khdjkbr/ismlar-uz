@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Oshxona — Bolagaism.uz</title>
+  <link rel="stylesheet" href="/oshxona/admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <a class="admin-brand" href="/oshxona/" aria-label="Oshxona bosh sahifa"><span>🍼</span><strong>Oshxona</strong><small>Bolagaism.uz</small></a>
+    <div class="admin-user"><span id="user-email">Проверка доступа…</span><a href="/" target="_blank" rel="noopener">Открыть сайт ↗</a></div>
+  </header>
+  <main class="admin-shell">
+    <section class="admin-intro"><div><span class="eyebrow">Редакционная панель</span><h1>Кухня сайта</h1><p>Управляйте именами, проверяйте изменения и публикуйте только готовые материалы.</p></div><div class="intro-actions"><button class="secondary" id="import-names">Импортировать каталог</button><button class="primary" id="new-name">+ Добавить имя</button></div></section>
+    <section class="stats" aria-label="Статистика"><article><span>Всего имён</span><strong id="stat-total">—</strong></article><article><span>Опубликовано</span><strong id="stat-published">—</strong></article><article><span>На проверке</span><strong id="stat-review">—</strong></article><article><span>Черновики</span><strong id="stat-draft">—</strong></article></section>
+    <section class="panel"><div class="panel-toolbar"><div><h2>Имена</h2><p id="result-count">Загрузка…</p></div><div class="filters"><input id="search" type="search" placeholder="Поиск имени"><select id="status"><option value="">Все статусы</option><option value="published">Опубликованные</option><option value="review">На проверке</option><option value="draft">Черновики</option><option value="archived">Архив</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Имя</th><th>Пол</th><th>Происхождение</th><th>Статус</th><th>Обновлено</th><th></th></tr></thead><tbody id="names"><tr><td colspan="6" class="empty">Загрузка записей…</td></tr></tbody></table></div></section>
+  </main>
+  <dialog id="editor"><form method="dialog" id="name-form"><div class="dialog-head"><div><span class="eyebrow">Редактор имени</span><h2 id="editor-title">Новое имя</h2></div><button type="button" class="icon-button" id="close-editor" aria-label="Закрыть">×</button></div><input type="hidden" id="field-id"><label>Имя<input id="field-name" required maxlength="80"></label><div class="two-col"><label>Пол<select id="field-gender"><option value="m">O‘g‘il bola</option><option value="f">Qiz bola</option></select></label><label>Статус<select id="field-status"><option value="draft">Черновик</option><option value="review">На проверке</option><option value="published">Опубликовано</option><option value="archived">Архив</option></select></label></div><label>Значение<textarea id="field-meaning" rows="4"></textarea></label><label>Происхождение<input id="field-origin" maxlength="120"></label><label>Варианты написания<input id="field-variants" maxlength="200"></label><label>SEO description<textarea id="field-description" rows="3" maxlength="180"></textarea></label><div class="dialog-actions"><button type="button" class="secondary" id="cancel-editor">Отмена</button><button class="primary" value="default">Сохранить</button></div><p class="form-status" id="form-status" role="status"></p></form></dialog>
+  <script src="/oshxona/admin.js" defer></script>
+</body>
+</html>
