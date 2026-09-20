@@ -132,6 +132,16 @@
       });
     });
   });
+  document.querySelectorAll('[data-article-track]').forEach(track => {
+    const carousel = track.closest('.article-carousel');
+    if (!carousel) return;
+    carousel.querySelectorAll('[data-article-scroll]').forEach(button => {
+      button.addEventListener('click', () => {
+        const direction = button.dataset.articleScroll === 'prev' ? -1 : 1;
+        track.scrollBy({left: direction * Math.max(track.clientWidth * 0.86, 260), behavior: 'smooth'});
+      });
+    });
+  });
 
   const input = document.getElementById('name-search');
   if (input) {
