@@ -303,7 +303,7 @@ class Builder:
         self.name_pages()
         self.support_pages()
         self.home()
-        for filename in ['app.js', 'style.css', 'CNAME', 'yandex_86cc7771ea469228.html']:
+        for filename in ['app.js', 'style.css', 'CNAME', 'yandex_86cc7771ea469228.html', '2c155b3f192c4d3e9e3a0ceb8733f171.txt']:
             self.write(filename, (ROOT / filename).read_text(encoding='utf-8'))
         for filename in ['about.html', 'contact.html', 'privacy.html', 'terms.html']:
             content = (ROOT / filename).read_text(encoding='utf-8')
