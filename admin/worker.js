@@ -51,6 +51,22 @@ async function googleAnalyticsReport(env) {
   const totals = daily.reduce((sum, row) => ({ activeUsers: sum.activeUsers + row.activeUsers, sessions: sum.sessions + row.sessions, pageViews: sum.pageViews + row.pageViews }), { activeUsers: 0, sessions: 0, pageViews: 0 });
   return { configured: true, period: '7days', ...totals, daily };
 }
+async function yandexMetrikaReport(env) {
+  const counterId = String(env.YANDEX_METRIKA_COUNTER_ID || '112365590').trim();
+  if (!env.YANDEX_METRIKA_TOKEN) return { configured: false, counterId, missing: ['YANDEX_METRIKA_TOKEN'] };
+  const params = new URLSearchParams({ ids: counterId, date1: '6daysAgo', date2: 'today', group: 'day', metrics: 'ym:s:users,ym:s:visits,ym:s:pageviews', accuracy: 'high', lang: 'ru' });
+  const response = await fetch('https://api-metrika.yandex.net/stat/v1/data/bytime?' + params.toString(), { headers: { Authorization: 'OAuth ' + env.YANDEX_METRIKA_TOKEN, Accept: 'application/json' } });
+  if (!response.ok) {
+    const details = await response.text();
+    throw new Error(`Yandex Metrica report failed (${response.status}): ${details.slice(0, 240)}`);
+  }
+  const data = await response.json();
+  const totals = (data.totals?.[0] || []).map((value) => Number(value || 0));
+  const series = data.data?.[0]?.metrics || [];
+  const dates = data.data?.[0]?.dimensions || [];
+  const daily = (dates.length ? dates : Array.from({ length: Math.max(...series.map((items) => items.length), 0) }, () => ({}))).map((dimension, index) => ({ date: dimension?.[0]?.name || '', users: Number(series[0]?.[index] || 0), visits: Number(series[1]?.[index] || 0), pageViews: Number(series[2]?.[index] || 0) }));
+  return { configured: true, counterId, period: '7days', users: totals[0] || 0, visits: totals[1] || 0, pageViews: totals[2] || 0, daily, sampled: Boolean(data.sampled), dataLag: data.data_lag || 0 };
+}
 async function authApi(request, env, url) {
   if (!env.DB) return json({ error: 'Admin database is not configured yet' }, 503);
   if (request.method === 'GET' && url.pathname === '/api/oshxona/auth/status') {
@@ -87,6 +103,9 @@ async function api(request, env) {
   const videosApi = url.pathname.startsWith('/api/oshxona/videos');
   if (request.method === 'GET' && url.pathname === '/api/oshxona/analytics/google') {
     try { return json(await googleAnalyticsReport(env)); } catch (error) { return json({ configured: true, error: `Google Analytics API: ${error.message}` }, 502); }
+  }
+  if (request.method === 'GET' && url.pathname === '/api/oshxona/analytics/yandex') {
+    try { return json(await yandexMetrikaReport(env)); } catch (error) { return json({ configured: true, error: `Yandex Metrica API: ${error.message}` }, 502); }
   }
   if (articlesApi) {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS articles (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, excerpt TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT '', cover_image TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','review','published','archived')), seo_title TEXT NOT NULL DEFAULT '', seo_description TEXT NOT NULL DEFAULT '', author_email TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
