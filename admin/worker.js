@@ -184,6 +184,7 @@ export default { async fetch(request, env) {
   if (url.pathname === '/oshxona' || url.pathname.startsWith('/oshxona/')) {
     const user = await sessionUser(request, env);
     if (!user && !url.pathname.startsWith('/oshxona/login')) return Response.redirect(`${url.origin}/oshxona/login`, 302);
+    return env.ASSETS.fetch(request);
   }
   if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
