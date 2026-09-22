@@ -15,7 +15,7 @@ function accessEmail(request) { return request.headers.get('Cf-Access-Authentica
 function cookie(request, name) { const value = request.headers.get('Cookie') || ''; const match = value.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`)); return match ? decodeURIComponent(match[1]) : ''; }
 async function ensureNameMetrics(env) {
   if (!env.DB) return;
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_metrics (name_id TEXT PRIMARY KEY, manual_priority INTEGER NOT NULL DEFAULT 0, page_views INTEGER NOT NULL DEFAULT 0, favorite_adds INTEGER NOT NULL DEFAULT 0, search_clicks INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+  try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_metrics (name_id TEXT PRIMARY KEY, manual_priority INTEGER NOT NULL DEFAULT 0, page_views INTEGER NOT NULL DEFAULT 0, favorite_adds INTEGER NOT NULL DEFAULT 0, search_clicks INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run(); } catch (_) {}
   try { await env.DB.prepare(`ALTER TABLE names ADD COLUMN manual_priority INTEGER NOT NULL DEFAULT 0`).run(); } catch (_) {}
 }
 async function recordNameEvent(request, env) {
@@ -274,7 +274,7 @@ async function ensureDefaultCollections(env) {
 }
 async function collectionRows(env, collection) {
   const where = collectionOriginSql(collection.origin);
-  return (await env.DB.prepare(`SELECT n.slug, n.name, n.gender, n.meaning, n.origin FROM names n LEFT JOIN name_metrics m ON m.name_id = n.id WHERE n.status='published' AND ${where} ORDER BY (COALESCE(m.manual_priority,0) * 1000 + COALESCE(m.page_views,0) + COALESCE(m.favorite_adds,0) * 10 + COALESCE(m.search_clicks,0) * 5) DESC, n.name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
+  try { return (await env.DB.prepare(`SELECT n.slug, n.name, n.gender, n.meaning, n.origin FROM names n LEFT JOIN name_metrics m ON m.name_id = n.id WHERE n.status='published' AND ${where} ORDER BY (COALESCE(m.manual_priority,0) * 1000 + COALESCE(m.page_views,0) + COALESCE(m.favorite_adds,0) * 10 + COALESCE(m.search_clicks,0) * 5) DESC, n.name COLLATE NOCASE ASC LIMIT 50`).all()).results || []; } catch (_) { return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || []; }
 }
 function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env) {
