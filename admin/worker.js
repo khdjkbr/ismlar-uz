@@ -127,6 +127,7 @@ async function api(request, env) {
   const email = await sessionUser(request, env); if (!email) return json({ error: 'Authentication required' }, 401);
   const articlesApi = url.pathname.startsWith('/api/oshxona/articles');
   const videosApi = url.pathname.startsWith('/api/oshxona/videos');
+  const collectionsApi = url.pathname.startsWith('/api/oshxona/collections');
   if (request.method === 'GET' && url.pathname === '/api/oshxona/analytics/google') {
     try { return json(await googleAnalyticsReport(env)); } catch (error) { return json({ configured: true, error: `Google Analytics API: ${error.message}` }, 502); }
   }
@@ -142,6 +143,10 @@ async function api(request, env) {
   if (videosApi) {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS videos (id TEXT PRIMARY KEY, video_id TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published','archived')), sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at TEXT)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_videos_status_order ON videos(status, sort_order, published_at)`).run();
+  }
+  if (collectionsApi) {
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('draft','published','archived')), sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+    await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_name_collections_status_order ON name_collections(status, sort_order)`).run();
   }
   if (request.method === 'POST' && url.pathname === '/api/oshxona/import') {
     const offset = Math.max(0, Number(url.searchParams.get('offset') || 0));
@@ -192,6 +197,21 @@ async function api(request, env) {
     const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''; const rows = await env.DB.prepare(`SELECT id, video_id, title, description, status, sort_order, updated_at, published_at FROM videos ${clause} ORDER BY sort_order ASC, updated_at DESC LIMIT 100`).bind(...args).all();
     const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'draft') AS draft FROM videos").first(); return json({ user: email, rows: rows.results || [], counts });
   }
+  if (request.method === 'GET' && url.pathname === '/api/oshxona/collections') {
+    const status = url.searchParams.get('status') || '';
+    const clause = status ? 'WHERE status = ?' : '';
+    const rows = await env.DB.prepare(`SELECT id, slug, title, description, origin, status, sort_order, updated_at FROM name_collections ${clause} ORDER BY sort_order ASC, title ASC`).bind(...(status ? [status] : [])).all();
+    return json({ user: email, rows: rows.results || [] });
+  }
+  if ((request.method === 'POST' || request.method === 'PATCH') && url.pathname.startsWith('/api/oshxona/collections')) {
+    const body = await request.json(); const title = String(body.title || '').trim(); const origin = String(body.origin || '').trim();
+    if (!title || !origin) return json({ error: 'Название и происхождение обязательны' }, 400);
+    const slug = String(body.slug || title.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, '')).trim();
+    const status = ['draft','published','archived'].includes(body.status) ? body.status : 'draft'; const order = Number.isFinite(Number(body.sort_order)) ? Number(body.sort_order) : 0; const now = new Date().toISOString(); const id = url.pathname.split('/').pop();
+    if (request.method === 'POST') { const newId = crypto.randomUUID(); await env.DB.prepare('INSERT INTO name_collections (id, slug, title, description, origin, status, sort_order, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, slug, title, String(body.description || '').trim(), origin, status, order, now).run(); if (status === 'published') await submitIndexNow(['/ismlar-toplamlari/' + slug + '/']); return json({ id: newId }, 201); }
+    const previous = await env.DB.prepare('SELECT id FROM name_collections WHERE id = ?').bind(id).first(); if (!previous) return json({ error: 'Collection not found' }, 404);
+    await env.DB.prepare('UPDATE name_collections SET slug=?, title=?, description=?, origin=?, status=?, sort_order=?, updated_at=? WHERE id=?').bind(slug, title, String(body.description || '').trim(), origin, status, order, now, id).run(); if (status === 'published') await submitIndexNow(['/ismlar-toplamlari/' + slug + '/']); return json({ id });
+  }
   if ((request.method === 'POST' || request.method === 'PATCH') && url.pathname.startsWith('/api/oshxona/videos')) {
     const body = await request.json(); const title = String(body.title || '').trim(); const rawVideo = String(body.video_id || '').trim(); const videoId = (rawVideo.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,20})/) || [null, rawVideo])[1];
     if (!title || !/^[A-Za-z0-9_-]{6,20}$/.test(videoId)) return json({ error: 'Укажите название и корректный YouTube ID' }, 400);
@@ -218,12 +238,35 @@ async function api(request, env) {
 }
 function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function videoSlug(value) { return String(value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\u0400-\u04ff]+/gi, '-').replace(/^-|-$/g, '') || 'video'; }
+const DEFAULT_COLLECTIONS = [
+  ['arabcha-ismlar', 'Arabcha ismlar', 'Arabcha kelib chiqishidagi ma’noli ismlar.', 'Arabcha', 1],
+  ['fors-tojikcha-ismlar', 'Fors-tojikcha ismlar', 'Fors-tojikcha kelib chiqishidagi chiroyli ismlar.', 'Fors-tojikcha', 2],
+  ['ozbekcha-ismlar', 'O‘zbekcha ismlar', 'O‘zbekcha va turkiy ildizga ega ismlar.', "O'zbekcha", 3],
+  ['ibroniycha-ismlar', 'Ibroniycha ismlar', 'Ibroniycha kelib chiqishidagi ismlar.', 'Ibroniycha', 4],
+  ['yunoncha-ismlar', 'Yunoncha ismlar', 'Yunoncha kelib chiqishidagi ismlar.', 'Yunoncha', 5],
+  ['hindcha-ismlar', 'Hindcha ismlar', 'Hindcha kelib chiqishidagi ismlar.', 'Hindcha', 6]
+];
+function collectionOriginSql(origin) { return origin === "O'zbekcha" ? "origin LIKE '%O''zbekcha%'" : `origin LIKE '%${String(origin).replace(/'/g, "''")}%'`; }
+async function ensureDefaultCollections(env) {
+  if (!env.DB) return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+  for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run();
+}
+async function collectionRows(env, collection) {
+  const where = collectionOriginSql(collection.origin);
+  return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
+}
+function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
+async function nameCollectionsMarkup(env) {
+  if (!env.DB) return '';
+  try { await ensureDefaultCollections(env); const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC, title ASC LIMIT 6").all()).results || []; if (!collections.length) return ''; const cards = await Promise.all(collections.map(async (collection) => { const rows = (await collectionRows(env, collection)).slice(0, 10); return `<article class="collection-panel"><div class="collection-panel-head"><div><span class="eyebrow">Ismlar to‘plami</span><h3>${escapeHtml(collection.title)}</h3><p>${escapeHtml(collection.description)}</p></div><a href="/ismlar-toplamlari/${encodeURIComponent(collection.slug)}/">Barchasini ko‘rish →</a></div><div class="collection-name-list">${rows.map(nameCollectionCard).join('')}</div></article>`; })); return `<section class="name-collections" aria-label="Ismlar to‘plamlari"><div class="section-heading-concept"><div><span class="eyebrow">Ismlar to‘plamlari</span><h2>Kelib chiqishi bo‘yicha ismlar</h2><p>O‘zingizga mos kelib chiqishdagi ismlarni tanlang.</p></div><a href="/ismlar-toplamlari/">Barcha to‘plamlar →</a></div><div class="collections-grid">${cards.join('')}</div></section>`; } catch (_) { return ''; }
+}
 async function videoMarkup(env) {
   if (!env.DB) return '';
   try {
     const rows = (await env.DB.prepare("SELECT video_id, title, description FROM videos WHERE status='published' ORDER BY sort_order ASC, published_at DESC LIMIT 12").all()).results || [];
     if (!rows.length) return '';
-    return `<section class="video-carousel" aria-label="Foydali videolar"><div class="video-carousel-head"><div><span class="eyebrow">Video tavsiyalar</span></div><div class="video-carousel-controls"><button type="button" class="video-scroll" data-video-scroll="prev" aria-label="Oldingi videolar">←</button><button type="button" class="video-scroll" data-video-scroll="next" aria-label="Keyingi videolar">→</button></div></div><div class="video-track" data-video-track>${rows.map((row) => { const slug = videoSlug(row.title); return `<article class="video-card"><a class="video-thumb" href="/video/${encodeURIComponent(slug)}/" data-video-id="${escapeHtml(row.video_id)}" aria-label="${escapeHtml(row.title)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h3><a href="/video/${encodeURIComponent(slug)}/">${escapeHtml(row.title)}</a></h3>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`; }).join('')}</div></section>`;
+    return `<section class="video-carousel" aria-label="Foydali videolar"><div class="video-carousel-head"><div><span class="eyebrow">Video tavsiyalar</span></div><div class="video-carousel-controls"><a class="carousel-index-link" href="/video/">Barcha videolar →</a><button type="button" class="video-scroll" data-video-scroll="prev" aria-label="Oldingi videolar">←</button><button type="button" class="video-scroll" data-video-scroll="next" aria-label="Keyingi videolar">→</button></div></div><div class="video-track" data-video-track>${rows.map((row) => { const slug = videoSlug(row.title); return `<article class="video-card"><a class="video-thumb" href="/video/${encodeURIComponent(slug)}/" data-video-id="${escapeHtml(row.video_id)}" aria-label="${escapeHtml(row.title)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h3><a href="/video/${encodeURIComponent(slug)}/">${escapeHtml(row.title)}</a></h3>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`; }).join('')}</div></section>`;
   } catch (error) { return ''; }
 }
 async function articleMarkup(env) {
@@ -231,19 +274,27 @@ async function articleMarkup(env) {
   try {
     const rows = (await env.DB.prepare("SELECT slug, title, excerpt, cover_image FROM articles WHERE status='published' ORDER BY published_at DESC, updated_at DESC LIMIT 12").all()).results || [];
     if (!rows.length) return '';
-    return `<section class="video-carousel article-carousel" aria-label="Foydali maqolalar"><div class="video-carousel-head"><div><span class="eyebrow">Foydali maqolalar</span></div><div class="video-carousel-controls"><button type="button" class="video-scroll" data-article-scroll="prev" aria-label="Oldingi maqolalar">←</button><button type="button" class="video-scroll" data-article-scroll="next" aria-label="Keyingi maqolalar">→</button></div></div><div class="video-track article-track" data-article-track>${rows.map((row) => { const image = row.cover_image ? `<img src="${escapeHtml(row.cover_image)}" alt="${escapeHtml(row.title)}" loading="lazy">` : `<span class="article-placeholder" aria-hidden="true">📖</span>`; return `<article class="video-card article-card"><a class="video-thumb article-thumb" href="/maqolalar/${encodeURIComponent(row.slug)}/" aria-label="${escapeHtml(row.title)}">${image}</a><h3><a href="/maqolalar/${encodeURIComponent(row.slug)}/">${escapeHtml(row.title)}</a></h3>${row.excerpt ? `<p>${escapeHtml(row.excerpt)}</p>` : ''}</article>`; }).join('')}</div></section>`;
+    return `<section class="video-carousel article-carousel" aria-label="Foydali maqolalar"><div class="video-carousel-head"><div><span class="eyebrow">Foydali maqolalar</span></div><div class="video-carousel-controls"><a class="carousel-index-link" href="/maqolalar/">Barcha maqolalar →</a><button type="button" class="video-scroll" data-article-scroll="prev" aria-label="Oldingi maqolalar">←</button><button type="button" class="video-scroll" data-article-scroll="next" aria-label="Keyingi maqolalar">→</button></div></div><div class="video-track article-track" data-article-track>${rows.map((row) => { const image = row.cover_image ? `<img src="${escapeHtml(row.cover_image)}" alt="${escapeHtml(row.title)}" loading="lazy">` : `<span class="article-placeholder" aria-hidden="true">📖</span>`; return `<article class="video-card article-card"><a class="video-thumb article-thumb" href="/maqolalar/${encodeURIComponent(row.slug)}/" aria-label="${escapeHtml(row.title)}">${image}</a><h3><a href="/maqolalar/${encodeURIComponent(row.slug)}/">${escapeHtml(row.title)}</a></h3>${row.excerpt ? `<p>${escapeHtml(row.excerpt)}</p>` : ''}</article>`; }).join('')}</div></section>`;
   } catch (error) { return ''; }
 }
 async function withVideos(response, env) {
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
-  const [markup, articles] = await Promise.all([videoMarkup(env), articleMarkup(env)]);
+  const [markup, articles, collections] = await Promise.all([videoMarkup(env), articleMarkup(env), nameCollectionsMarkup(env)]);
   const html = await response.text();
   let updated = html;
   if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="[^"]*article-teasers[^"]*">[\s\S]*?<\/section>/, articles);
   if (markup && !updated.includes('data-video-track')) updated = updated.replace('</main>', `${markup}</main>`);
+  if (collections && updated.includes('id="stepWelcome"') && !updated.includes('name-collections')) updated = updated.replace('</main>', `${collections}</main>`);
   if (updated === html) return response;
   return new Response(updated, response);
+}
+async function publicVideoIndex(env) {
+  const rows = (await env.DB.prepare("SELECT video_id,title,description,published_at FROM videos WHERE status='published' ORDER BY sort_order ASC,published_at DESC").all()).results || [];
+  const cards = rows.map((row) => { const slug = videoSlug(row.title); return `<article class="video-card"><a class="video-thumb" href="/video/${encodeURIComponent(slug)}/"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h2><a href="/video/${encodeURIComponent(slug)}/">${escapeHtml(row.title)}</a></h2>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`; }).join('');
+  const title = 'Video tavsiyalar | Bolagaism.uz'; const description = 'Farzandga ism tanlash va o‘zbek ismlari haqida foydali videolar.'; const canonical = 'https://bolagaism.uz/video/';
+  const schema = { '@context':'https://schema.org', '@type':'CollectionPage', name:title, description, url:canonical, inLanguage:'uz', mainEntity:{ '@type':'ItemList', itemListElement:rows.map((row,index)=>({ '@type':'ListItem', position:index+1, name:row.title, url:`https://bolagaism.uz/video/${encodeURIComponent(videoSlug(row.title))}/` })) } };
+  return new Response(`<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${canonical}"><meta name="robots" content="index,follow"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css"><script type="application/ld+json">${JSON.stringify(schema).replace(/<\/script/gi,'<\\/script>')}</script></head><body><header class="sticky-header"><div class="header-container"><div class="brand-row"><a class="brand-logo" href="/"><span class="logo-icon">🍼</span><span class="logo-text">BolagaIsm<span class="logo-tld">.uz</span></span></a></div></div></header><main id="main" class="page-shell"><section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><span>Video tavsiyalar</span></nav><span class="eyebrow">Video tavsiyalar</span><h1>Foydali videolar</h1><p class="meaning-lead">Ism tanlash va farzand tarbiyasi bo‘yicha tanlangan videolar.</p><div class="media-card-grid">${cards || '<p>Hozircha videolar yo‘q.</p>'}</div></section></main><footer class="site-footer"><div class="container"><strong>Bolagaism.uz</strong><p>Farzandingiz uchun ma'noli ism tanlang.</p><nav class="footer-links"><a href="/maqolalar/">Maqolalar</a><a href="/ismlar-toplamlari/">Ismlar to‘plamlari</a></nav></div></footer></body></html>`, { status:200, headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'} });
 }
 async function publicVideoPage(request, env, url) {
   if (!env.DB) return null;
@@ -279,31 +330,49 @@ async function publicNamePage(request, env, url) {
 async function publicArticlePage(request, env, url) {
   if (!env.DB) return null;
   const match = url.pathname.match(/^\/maqolalar(?:\/([^/]+))?\/?$/); if (!match) return null;
-  const slug = match[1]; const rows = slug ? [] : (await env.DB.prepare("SELECT slug,title,excerpt,category,published_at FROM articles WHERE status='published' ORDER BY published_at DESC LIMIT 12").all()).results || [];
+  const slug = match[1]; const rows = slug ? [] : (await env.DB.prepare("SELECT slug,title,excerpt,category,cover_image,published_at FROM articles WHERE status='published' ORDER BY published_at DESC").all()).results || [];
   let body = slug ? await env.DB.prepare("SELECT * FROM articles WHERE slug=? AND status='published'").bind(decodeURIComponent(slug)).first() : null;
   const escText = (v) => escapeHtml(v).replace(/\n/g, '<br>');
   if (slug && !body) return new Response('Not found', { status: 404, headers: { 'content-type':'text/plain; charset=utf-8' } });
   const title = body ? (body.seo_title || body.title) : 'Foydali maqolalar | Bolagaism.uz'; const description = body ? (body.seo_description || body.excerpt) : 'Ism tanlash va o‘zbek ismlari haqida foydali maqolalar.';
-  const content = body ? `<article class="paper readable"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a> <span>›</span> <a href="/maqolalar/">Maqolalar</a> <span>›</span> <span>${escapeHtml(body.title)}</span></nav><span class="eyebrow">${escapeHtml(body.category || 'Maqola')}</span><h1>${escapeHtml(body.title)}</h1><p class="meaning-lead">${escapeHtml(body.excerpt)}</p><div class="article-content">${escText(body.content)}</div><small>Yangilangan: ${escapeHtml(body.updated_at || '')}</small></article>` : `<section class="paper readable"><span class="eyebrow">Foydali maqolalar</span><h1>Ism tanlash bo‘yicha maqolalar</h1><p>Farzandingiz uchun ism tanlashda yordam beradigan foydali tavsiyalar.</p><div class="related-grid">${rows.map((r) => `<a class="catalog-tile" href="/maqolalar/${encodeURIComponent(r.slug)}/"><strong>${escapeHtml(r.title)}</strong><span>${escapeHtml(r.excerpt)}</span></a>`).join('')}</div></section>`;
+  const content = body ? `<article class="paper readable"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a> <span>›</span> <a href="/maqolalar/">Maqolalar</a> <span>›</span> <span>${escapeHtml(body.title)}</span></nav><span class="eyebrow">${escapeHtml(body.category || 'Maqola')}</span><h1>${escapeHtml(body.title)}</h1><p class="meaning-lead">${escapeHtml(body.excerpt)}</p><div class="article-content">${escText(body.content)}</div><small>Yangilangan: ${escapeHtml(body.updated_at || '')}</small></article>` : `<section class="paper readable collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a> <span>›</span> <span>Maqolalar</span></nav><span class="eyebrow">Foydali maqolalar</span><h1>Ism tanlash bo‘yicha maqolalar</h1><p class="meaning-lead">Farzandingiz uchun ism tanlashda yordam beradigan foydali tavsiyalar.</p><div class="media-card-grid">${rows.map((r) => { const image = r.cover_image ? `<img src="${escapeHtml(r.cover_image)}" alt="${escapeHtml(r.title)}" loading="lazy">` : '<span class="article-placeholder" aria-hidden="true">📖</span>'; return `<article class="video-card article-card"><a class="video-thumb article-thumb" href="/maqolalar/${encodeURIComponent(r.slug)}/" aria-label="${escapeHtml(r.title)}">${image}</a><h2><a href="/maqolalar/${encodeURIComponent(r.slug)}/">${escapeHtml(r.title)}</a></h2>${r.excerpt ? `<p>${escapeHtml(r.excerpt)}</p>` : ''}</article>`; }).join('')}</div></section>`;
   const canonical = `https://bolagaism.uz${url.pathname}`;
   const articleSchema = body ? { '@context': 'https://schema.org', '@type': 'Article', headline: body.title, description, datePublished: body.published_at || body.updated_at || undefined, dateModified: body.updated_at || undefined, inLanguage: 'uz', mainEntityOfPage: { '@type': 'WebPage', '@id': canonical }, author: { '@type': 'Organization', name: 'Bolagaism.uz', url: 'https://bolagaism.uz/' }, publisher: { '@type': 'Organization', name: 'Bolagaism.uz', url: 'https://bolagaism.uz/' } } : { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: canonical, inLanguage: 'uz', mainEntity: { '@type': 'ItemList', itemListElement: rows.map((item, index) => ({ '@type': 'ListItem', position: index + 1, name: item.title, url: `https://bolagaism.uz/maqolalar/${encodeURIComponent(item.slug)}/` })) } };
   const html = `<!doctype html><html lang="uz"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css"><script type="application/ld+json">${JSON.stringify(articleSchema).replace(/<\/script/gi, '<\\/script>')}</script></head><body><header class="sticky-header"><div class="header-container"><div class="brand-row"><a class="brand-logo" href="/"><span class="logo-icon">🍼</span><span class="logo-text">BolagaIsm<span class="logo-tld">.uz</span></span></a></div></div></header><main id="main" class="page-shell">${content}</main><footer class="site-footer"><div class="container"><strong>Bolagaism.uz</strong><p>Farzandingiz uchun ma'noli ism tanlang.</p><nav class="footer-links"><a href="/ogil-bola-ismlari/">O'g'il bolalar</a><a href="/qiz-bola-ismlari/">Qiz bolalar</a><a href="/maqolalar/">Maqolalar</a></nav></div></footer></body></html>`;
   return new Response(html, { status: 200, headers: { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store' } });
 }
+async function publicCollectionPage(env, url) {
+  await ensureDefaultCollections(env);
+  const match = url.pathname.match(/^\/ismlar-toplamlari(?:\/([^/]+))?\/?$/); if (!match) return null;
+  const slug = match[1]; const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC,title ASC").all()).results || [];
+  if (!slug) {
+    const cards = collections.map((item) => `<a class="collection-index-card" href="/ismlar-toplamlari/${encodeURIComponent(item.slug)}/"><span class="eyebrow">${escapeHtml(item.origin)}</span><h2>${escapeHtml(item.title)}</h2><p>${escapeHtml(item.description)}</p><strong>50 ta ismni ko‘rish →</strong></a>`).join('');
+    return collectionResponse('Ismlar to‘plamlari | Bolagaism.uz','Kelib chiqishi bo‘yicha o‘zbek ismlari to‘plamlari.',url.pathname,`<section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><span>Ismlar to‘plamlari</span></nav><span class="eyebrow">Ismlar to‘plamlari</span><h1>Kelib chiqishi bo‘yicha ismlar</h1><p class="meaning-lead">Turli kelib chiqishdagi ismlarni solishtiring va farzandingizga mos ismni toping.</p><div class="collection-directory">${cards}</div></section>`);
+  }
+  const collection = collections.find((item) => item.slug === decodeURIComponent(slug)); if (!collection) return new Response('Not found',{status:404,headers:{'content-type':'text/plain; charset=utf-8'}});
+  const rows = await collectionRows(env, collection); const cards = rows.map(nameCollectionCard).join(''); const title = `${collection.title} | Bolagaism.uz`; const description = collection.description || `${collection.title} ma’nosi va kelib chiqishi.`;
+  const listSchema = { '@context':'https://schema.org', '@type':'CollectionPage', name:title, description, url:`https://bolagaism.uz${url.pathname}`, inLanguage:'uz', mainEntity:{ '@type':'ItemList', itemListElement:rows.map((row,index)=>({ '@type':'ListItem', position:index+1, name:row.name, url:`https://bolagaism.uz/ism/${encodeURIComponent(row.slug)}/` })) } };
+  return collectionResponse(title, description, url.pathname, `<section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><a href="/ismlar-toplamlari/">Ismlar to‘plamlari</a><span>›</span><span>${escapeHtml(collection.title)}</span></nav><span class="eyebrow">${escapeHtml(collection.origin)}</span><h1>${escapeHtml(collection.title)}</h1><p class="meaning-lead">${escapeHtml(description)}</p><div class="collection-toolbar"><span>Top ${rows.length} ism</span><select aria-label="Filtr"><option>Alifbo bo‘yicha</option></select></div><div class="collection-name-grid">${cards || '<p>Bu kelib chiqish bo‘yicha hozircha ism topilmadi.</p>'}</div></section>`, listSchema);
+}
+function collectionResponse(title, description, path, content, schema) { const canonical = `https://bolagaism.uz${path}`; const data = schema || { '@context':'https://schema.org','@type':'CollectionPage',name:title,description,url:canonical,inLanguage:'uz' }; return new Response(`<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="robots" content="index,follow"><link rel="canonical" href="${canonical}"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css"><script type="application/ld+json">${JSON.stringify(data).replace(/<\/script/gi,'<\\/script>')}</script></head><body><header class="sticky-header"><div class="header-container"><div class="brand-row"><a class="brand-logo" href="/"><span class="logo-icon">🍼</span><span class="logo-text">BolagaIsm<span class="logo-tld">.uz</span></span></a></div></div></header><main id="main" class="page-shell">${content}</main><footer class="site-footer"><div class="container"><strong>Bolagaism.uz</strong><p>Farzandingiz uchun ma'noli ism tanlang.</p><nav class="footer-links"><a href="/video/">Videolar</a><a href="/maqolalar/">Maqolalar</a></nav></div></footer></body></html>`,{status:200,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}}); }
 async function publicSitemap(request, env) {
   if (!env.DB) return null;
   const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null;
   try {
     let xml = await asset.text();
-    const [videos, articles] = await Promise.all([
+    await ensureDefaultCollections(env);
+    const [videos, articles, collections] = await Promise.all([
       env.DB.prepare("SELECT video_id, title, updated_at, published_at FROM videos WHERE status='published'").all(),
-      env.DB.prepare("SELECT slug, updated_at, published_at FROM articles WHERE status='published'").all()
+      env.DB.prepare("SELECT slug, updated_at, published_at FROM articles WHERE status='published'").all(),
+      env.DB.prepare("SELECT slug, updated_at FROM name_collections WHERE status='published'").all()
     ]);
     const existing = new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]));
     const entries = [];
     const add = (path, updated) => { const loc = `https://bolagaism.uz${path}`; if (existing.has(loc)) return; existing.add(loc); const date = (updated || '').slice(0, 10); entries.push(`<url><loc>${loc}</loc>${date ? `<lastmod>${date}</lastmod>` : ''}</url>`); };
     for (const row of (articles.results || [])) add(`/maqolalar/${encodeURIComponent(row.slug)}/`, row.updated_at || row.published_at);
     for (const row of (videos.results || [])) add(`/video/${encodeURIComponent(videoSlug(row.title))}/`, row.updated_at || row.published_at);
+    add('/video/'); add('/ismlar-toplamlari/');
+    for (const row of (collections.results || [])) add(`/ismlar-toplamlari/${encodeURIComponent(row.slug)}/`, row.updated_at);
     if (entries.length) xml = xml.replace('</urlset>', `${entries.join('')}</urlset>`);
     return new Response(xml, { status: 200, headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=300' } });
   } catch (_) { return asset; }
@@ -317,8 +386,10 @@ export default { async fetch(request, env) {
     return env.ASSETS.fetch(request);
   }
   if (url.pathname === '/sitemap.xml') { const dynamic = await publicSitemap(request, env); if (dynamic) return dynamic; }
+  if (url.pathname === '/video/' || url.pathname === '/video') { if (env.DB) return publicVideoIndex(env); }
   if (url.pathname.startsWith('/video/')) { const dynamic = await publicVideoPage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
+  if (url.pathname.startsWith('/ismlar-toplamlari')) { const dynamic = await publicCollectionPage(env, url); if (dynamic) return dynamic; }
   return withVideos(await env.ASSETS.fetch(request), env);
 } };
