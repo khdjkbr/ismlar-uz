@@ -172,7 +172,7 @@ async function api(request, env) {
       const key = `${item.g}:${String(item.l).toLowerCase()}`;
       const route = routes[key] || `/ism/${String(item.l).toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, '')}/`;
       const slug = route.replace(/^\/ism\//, '').replace(/\/$/, '');
-      return env.DB.prepare('INSERT OR IGNORE INTO names (id, slug, name, gender, meaning, origin, source, status, seo_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(String(item.id), slug, item.l, item.g, item.m || '', item.lang || '', "«O'zbek ismlari ma'nosi» — Begmatov E.A. O'zbekiston Milliy Ensiklopediyasi. Davlat ilmiy nashriyoti, 2007.", 'published', `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`);
+      return env.DB.prepare('INSERT OR IGNORE INTO names (id, slug, name, gender, meaning, origin, source, status, seo_description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(String(item.id), slug, item.l, item.g, item.m || '', normalizeOriginValue(item.lang), "«O'zbek ismlari ma'nosi» — Begmatov E.A. O'zbekiston Milliy Ensiklopediyasi. Davlat ilmiy nashriyoti, 2007.", 'published', `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`);
     });
     if (statements.length) await env.DB.batch(statements);
     const nextOffset = offset + batch.length;
