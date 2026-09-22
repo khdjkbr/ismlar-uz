@@ -285,7 +285,7 @@ async function withVideos(response, env) {
   let updated = html;
   if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="[^"]*article-teasers[^"]*">[\s\S]*?<\/section>/, articles);
   if (markup && !updated.includes('data-video-track')) updated = updated.replace('</main>', `${markup}</main>`);
-  if (collections && updated.includes('id="stepWelcome"') && !updated.includes('name-collections')) updated = updated.replace('</main>', `${collections}</main>`);
+  if (collections && (updated.includes('class="concept-hero"') || updated.includes('id="stepWelcome"')) && !updated.includes('name-collections')) updated = updated.replace('</main>', `${collections}</main>`);
   if (updated === html) return response;
   return new Response(updated, response);
 }
