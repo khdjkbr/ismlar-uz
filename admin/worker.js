@@ -406,7 +406,10 @@ async function publicSitemap(request, env) {
 export default { async fetch(request, env) {
  try {
   const url = new URL(request.url);
-  if (url.pathname.startsWith('/api/oshxona/')) return api(request, env);
+  if (url.pathname.startsWith('/api/oshxona/') || url.pathname === '/api/public/name-event') {
+    try { return await api(request, env); }
+    catch (error) { return json({ error: `Worker API: ${error?.message || 'Unknown error'}` }, 500); }
+  }
   if (url.pathname === '/oshxona' || url.pathname.startsWith('/oshxona/')) {
     const user = await sessionUser(request, env);
     if (!user && !url.pathname.startsWith('/oshxona/login')) return Response.redirect(`${url.origin}/oshxona/login`, 302);
