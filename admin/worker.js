@@ -355,7 +355,8 @@ async function withVideos(response, env, request) {
   return new Response(updated, response);
 }
 async function publicVideoIndex(env) {
-  const rows = (await env.DB.prepare("SELECT video_id,title,description,published_at FROM videos WHERE status='published' ORDER BY sort_order ASC,published_at DESC").all()).results || [];
+  let rows = [];
+  try { rows = (await env.DB.prepare("SELECT video_id,title,description,published_at FROM videos WHERE status='published' ORDER BY sort_order ASC,published_at DESC").all()).results || []; } catch (_) {}
   const cards = rows.map((row) => { const slug = videoSlug(row.title); return `<article class="video-card"><a class="video-thumb" href="/video/${encodeURIComponent(slug)}/"><img src="https://i.ytimg.com/vi/${encodeURIComponent(row.video_id)}/hqdefault.jpg" alt="${escapeHtml(row.title)}" loading="lazy"><span class="video-play" aria-hidden="true">▶</span></a><h2><a href="/video/${encodeURIComponent(slug)}/">${escapeHtml(row.title)}</a></h2>${row.description ? `<p>${escapeHtml(row.description)}</p>` : ''}</article>`; }).join('');
   const title = 'Video tavsiyalar | Bolagaism.uz'; const description = 'Farzandga ism tanlash va o‘zbek ismlari haqida foydali videolar.'; const canonical = 'https://bolagaism.uz/video/';
   const schema = { '@context':'https://schema.org', '@type':'CollectionPage', name:title, description, url:canonical, inLanguage:'uz', mainEntity:{ '@type':'ItemList', itemListElement:rows.map((row,index)=>({ '@type':'ListItem', position:index+1, name:row.title, url:`https://bolagaism.uz/video/${encodeURIComponent(videoSlug(row.title))}/` })) } };
