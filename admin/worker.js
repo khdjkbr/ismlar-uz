@@ -286,7 +286,7 @@ async function ensureDefaultCollections(env) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run();
 }
-async function collectionRows(env, collection, usedFamilies) {
+async function collectionRows(env, collection, usedFamilies = new Set()) {
   const where = collectionOriginSql(collection.origin);
   const rows = (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY RANDOM() LIMIT 400`).all()).results || [];
   return randomUniqueNameRows(rows.filter((row) => isSingleName(row.name)), usedFamilies, 10);
@@ -299,7 +299,7 @@ async function nameCollectionsMarkup(env, request) {
       const rows = (rowsBySlug.get(collection.slug) || []).slice(0, 10);
       return `<article class="collection-panel"><div class="collection-panel-head"><span class="eyebrow">${escapeHtml(collection.origin)}</span><a href="/ismlar-toplamlari/${encodeURIComponent(collection.slug)}/">Barchasi</a></div><div class="collection-name-list">${rows.map(nameCollectionCard).join('')}</div></article>`;
     });
-    return `<section class="name-collections" aria-label="Ismlar to‘plamlari"><div class="section-heading-concept"><span class="eyebrow">Ismlar to‘plamlari</span><a href="/ismlar-toplamlari/">Barcha to‘plamlar →</a></div><div class="collections-grid">${cards.join('')}</div></section>`;
+    return `<section class="name-collections" aria-label="Ismlar to‘plamlari"><div class="section-heading-concept"><span class="eyebrow">Ismlar to‘plamlari</span><a href="/ismlar-toplamlari/">Barcha to‘plamlar</a></div><div class="collections-grid">${cards.join('')}</div></section>`;
   };
   try {
     if (!env.DB) throw new Error('D1 unavailable');
@@ -406,15 +406,30 @@ async function publicArticlePage(request, env, url) {
   return new Response(html, { status: 200, headers: { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store' } });
 }
 async function publicCollectionPage(env, url) {
-  await ensureDefaultCollections(env);
   const match = url.pathname.match(/^\/ismlar-toplamlari(?:\/([^/]+))?\/?$/); if (!match) return null;
-  const slug = match[1]; const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC,title ASC").all()).results || [];
+  const slug = match[1];
+  let collections = [];
+  try {
+    await ensureDefaultCollections(env);
+    collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC,title ASC").all()).results || [];
+  } catch (_) {}
+  if (!collections.length) collections = DEFAULT_COLLECTIONS.map(([slug, title, description, origin]) => ({ slug, title, description, origin }));
   if (!slug) {
     const cards = collections.map((item) => `<a class="collection-index-card" href="/ismlar-toplamlari/${encodeURIComponent(item.slug)}/"><span class="eyebrow">${escapeHtml(item.origin)}</span><h2>${escapeHtml(item.title)}</h2><p>${escapeHtml(item.description)}</p><strong>50 ta ismni ko‘rish →</strong></a>`).join('');
     return collectionResponse('Ismlar to‘plamlari | Bolagaism.uz','Kelib chiqishi bo‘yicha o‘zbek ismlari to‘plamlari.',url.pathname,`<section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><span>Ismlar to‘plamlari</span></nav><span class="eyebrow">Ismlar to‘plamlari</span><h1>Kelib chiqishi bo‘yicha ismlar</h1><p class="meaning-lead">Turli kelib chiqishdagi ismlarni solishtiring va farzandingizga mos ismni toping.</p><div class="collection-directory">${cards}</div></section>`);
   }
   const collection = collections.find((item) => item.slug === decodeURIComponent(slug)); if (!collection) return new Response('Not found',{status:404,headers:{'content-type':'text/plain; charset=utf-8'}});
-  const rows = await collectionRows(env, collection); const cards = rows.map(nameCollectionCard).join(''); const title = `${collection.title} | Bolagaism.uz`; const description = collection.description || `${collection.title} ma’nosi va kelib chiqishi.`;
+  let rows = [];
+  try { rows = await collectionRows(env, collection); } catch (_) {
+    try {
+      const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', 'https://bolagaism.uz')));
+      const matchData = (await source.text()).match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s);
+      const all = matchData ? JSON.parse(matchData[1]) : [];
+      const candidates = all.filter((item) => isSingleName(item.l) && String(item.lang || '').toLowerCase().includes(collection.origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, meaning: item.m || '', origin: item.lang || '' }));
+      rows = randomUniqueNameRows(candidates, new Set(), 50);
+    } catch (_) {}
+  }
+  const cards = rows.map(nameCollectionCard).join(''); const title = `${collection.title} | Bolagaism.uz`; const description = collection.description || `${collection.title} ma’nosi va kelib chiqishi.`;
   const listSchema = { '@context':'https://schema.org', '@type':'CollectionPage', name:title, description, url:`https://bolagaism.uz${url.pathname}`, inLanguage:'uz', mainEntity:{ '@type':'ItemList', itemListElement:rows.map((row,index)=>({ '@type':'ListItem', position:index+1, name:row.name, url:`https://bolagaism.uz/ism/${encodeURIComponent(row.slug)}/` })) } };
   return collectionResponse(title, description, url.pathname, `<section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><a href="/ismlar-toplamlari/">Ismlar to‘plamlari</a><span>›</span><span>${escapeHtml(collection.title)}</span></nav><span class="eyebrow">${escapeHtml(collection.origin)}</span><h1>${escapeHtml(collection.title)}</h1><p class="meaning-lead">${escapeHtml(description)}</p><div class="collection-toolbar"><span>Top ${rows.length} ism</span><select aria-label="Filtr"><option>Alifbo bo‘yicha</option></select></div><div class="collection-name-grid">${cards || '<p>Bu kelib chiqish bo‘yicha hozircha ism topilmadi.</p>'}</div></section>`, listSchema);
 }
