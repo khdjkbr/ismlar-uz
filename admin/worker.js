@@ -265,15 +265,31 @@ const DEFAULT_COLLECTIONS = [
   ['hindcha-ismlar', 'Hindcha ismlar', 'Hindcha kelib chiqishidagi ismlar.', 'Hindcha', 6]
 ];
 function collectionOriginSql(origin) { return origin === "O'zbekcha" ? "origin LIKE '%O''zbekcha%'" : `origin LIKE '%${String(origin).replace(/'/g, "''")}%'`; }
+function nameFamilyKey(value) {
+  const normalized = String(value || '').trim().toLocaleLowerCase().replace(/[‘’ʻ]/g, "'").replace(/[^a-z0-9а-яё']/gi, '');
+  return normalized.replace(/(?:bek|jon|xon)+$/g, '') || normalized;
+}
+function randomUniqueNameRows(rows, usedFamilies, limit = 10) {
+  const shuffled = [...rows].sort(() => Math.random() - 0.5);
+  const selected = [];
+  for (const row of shuffled) {
+    const family = nameFamilyKey(row.name);
+    if (!family || usedFamilies.has(family)) continue;
+    usedFamilies.add(family);
+    selected.push(row);
+    if (selected.length >= limit) break;
+  }
+  return selected;
+}
 async function ensureDefaultCollections(env) {
   if (!env.DB) return;
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run();
 }
-async function collectionRows(env, collection) {
+async function collectionRows(env, collection, usedFamilies) {
   const where = collectionOriginSql(collection.origin);
-  const rows = (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 300`).all()).results || [];
-  return rows.filter((row) => isSingleName(row.name)).slice(0, 50);
+  const rows = (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY RANDOM() LIMIT 400`).all()).results || [];
+  return randomUniqueNameRows(rows.filter((row) => isSingleName(row.name)), usedFamilies, 10);
 }
 function nameCollectionCard(row) { const genderClass = row.gender === 'f' ? 'gender-f' : 'gender-m'; return `<a class="collection-name-card ${genderClass}" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env, request) {
@@ -289,7 +305,9 @@ async function nameCollectionsMarkup(env, request) {
     if (!env.DB) throw new Error('D1 unavailable');
     await ensureDefaultCollections(env);
     const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC, title ASC LIMIT 6").all()).results || [];
-    const rowsBySlug = new Map(await Promise.all(collections.map(async (collection) => [collection.slug, await collectionRows(env, collection)])));
+    const usedFamilies = new Set();
+    const rowsBySlug = new Map();
+    for (const collection of collections) rowsBySlug.set(collection.slug, await collectionRows(env, collection, usedFamilies));
     const markup = render(collections, rowsBySlug);
     if (markup) return markup;
   } catch (_) {}
@@ -299,9 +317,10 @@ async function nameCollectionsMarkup(env, request) {
     const source = await env.ASSETS.fetch(new Request(assetUrl));
     const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s);
     if (!match) return '';
-    const all = JSON.parse(match[1]); const rowsBySlug = new Map();
+    const all = JSON.parse(match[1]); const rowsBySlug = new Map(); const usedFamilies = new Set();
     for (const [slug, , , origin] of DEFAULT_COLLECTIONS) {
-      const rows = all.filter((item) => isSingleName(item.l) && String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).slice(0, 10).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, meaning: item.m || '', origin: item.lang || '' }));
+      const candidates = all.filter((item) => isSingleName(item.l) && String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, meaning: item.m || '', origin: item.lang || '' }));
+      const rows = randomUniqueNameRows(candidates, usedFamilies, 10);
       rowsBySlug.set(slug, rows);
     }
     return render(DEFAULT_COLLECTIONS.map(([slug, title, description, origin]) => ({ slug, title, description, origin })), rowsBySlug);
