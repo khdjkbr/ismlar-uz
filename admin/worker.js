@@ -263,7 +263,7 @@ async function ensureDefaultCollections(env) {
 }
 async function collectionRows(env, collection) {
   const where = collectionOriginSql(collection.origin);
-  return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
+  return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND origin NOT LIKE '% / %' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
 }
 function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env, request) {
@@ -291,7 +291,7 @@ async function nameCollectionsMarkup(env, request) {
     if (!match) return '';
     const all = JSON.parse(match[1]); const rowsBySlug = new Map();
     for (const [slug, , , origin] of DEFAULT_COLLECTIONS) {
-      const rows = all.filter((item) => String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).slice(0, 10).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, meaning: item.m || '', origin: item.lang || '' }));
+      const rows = all.filter((item) => !String(item.lang || '').includes('/') && String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).slice(0, 10).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, meaning: item.m || '', origin: item.lang || '' }));
       rowsBySlug.set(slug, rows);
     }
     return render(DEFAULT_COLLECTIONS.map(([slug, title, description, origin]) => ({ slug, title, description, origin })), rowsBySlug);
