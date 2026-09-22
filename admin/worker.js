@@ -257,7 +257,7 @@ async function collectionRows(env, collection) {
   return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
 }
 function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
-async function nameCollectionsMarkup(env) {
+async function nameCollectionsMarkup(env, request) {
   const render = (collections, rowsBySlug) => {
     if (!collections.length) return '';
     const cards = collections.map((collection) => {
@@ -276,7 +276,8 @@ async function nameCollectionsMarkup(env) {
   } catch (_) {}
   // Keep the homepage useful even while D1 is unavailable or a legacy schema is being migrated.
   try {
-    const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', 'https://bolagaism.uz')));
+    const assetUrl = request ? new URL('/names_data.js', request.url) : new URL('/names_data.js', 'https://bolagaism.uz');
+    const source = await env.ASSETS.fetch(new Request(assetUrl));
     const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s);
     if (!match) return '';
     const all = JSON.parse(match[1]); const rowsBySlug = new Map();
@@ -303,10 +304,10 @@ async function articleMarkup(env) {
     return `<section class="video-carousel article-carousel" aria-label="Foydali maqolalar"><div class="video-carousel-head"><div><span class="eyebrow">Foydali maqolalar</span></div><div class="video-carousel-controls"><a class="carousel-index-link" href="/maqolalar/">Barcha maqolalar →</a><button type="button" class="video-scroll" data-article-scroll="prev" aria-label="Oldingi maqolalar">←</button><button type="button" class="video-scroll" data-article-scroll="next" aria-label="Keyingi maqolalar">→</button></div></div><div class="video-track article-track" data-article-track>${rows.map((row) => { const image = row.cover_image ? `<img src="${escapeHtml(row.cover_image)}" alt="${escapeHtml(row.title)}" loading="lazy">` : `<span class="article-placeholder" aria-hidden="true">📖</span>`; return `<article class="video-card article-card"><a class="video-thumb article-thumb" href="/maqolalar/${encodeURIComponent(row.slug)}/" aria-label="${escapeHtml(row.title)}">${image}</a><h3><a href="/maqolalar/${encodeURIComponent(row.slug)}/">${escapeHtml(row.title)}</a></h3>${row.excerpt ? `<p>${escapeHtml(row.excerpt)}</p>` : ''}</article>`; }).join('')}</div></section>`;
   } catch (error) { return ''; }
 }
-async function withVideos(response, env) {
+async function withVideos(response, env, request) {
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
-  const [markup, articles, collections] = await Promise.all([videoMarkup(env), articleMarkup(env), nameCollectionsMarkup(env)]);
+  const [markup, articles, collections] = await Promise.all([videoMarkup(env), articleMarkup(env), nameCollectionsMarkup(env, request)]);
   const html = await response.text();
   let updated = html;
   if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="[^"]*article-teasers[^"]*">[\s\S]*?<\/section>/, articles);
@@ -414,11 +415,11 @@ export default { async fetch(request, env) {
   if (url.pathname === '/sitemap.xml') { const dynamic = await publicSitemap(request, env); if (dynamic) return dynamic; }
   if (url.pathname.startsWith('/ism/')) return env.ASSETS.fetch(request);
   if (url.pathname === '/video/' || url.pathname === '/video') { if (env.DB) return publicVideoIndex(env); }
-  if (url.pathname.startsWith('/video/')) { const dynamic = await publicVideoPage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
-  if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
-  if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
+  if (url.pathname.startsWith('/video/')) { const dynamic = await publicVideoPage(request, env, url); if (dynamic) return withVideos(dynamic, env, request); }
+  if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env, request); }
+  if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env, request); }
   if (url.pathname.startsWith('/ismlar-toplamlari')) { const dynamic = await publicCollectionPage(env, url); if (dynamic) return dynamic; }
-  return withVideos(await env.ASSETS.fetch(request), env);
+  return withVideos(await env.ASSETS.fetch(request), env, request);
  } catch (_) {
   return env.ASSETS.fetch(request);
  }
