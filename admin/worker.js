@@ -386,6 +386,7 @@ export default { async fetch(request, env) {
     return env.ASSETS.fetch(request);
   }
   if (url.pathname === '/sitemap.xml') { const dynamic = await publicSitemap(request, env); if (dynamic) return dynamic; }
+  if (url.pathname.startsWith('/ism/')) return env.ASSETS.fetch(request);
   if (url.pathname === '/video/' || url.pathname === '/video') { if (env.DB) return publicVideoIndex(env); }
   if (url.pathname.startsWith('/video/')) { const dynamic = await publicVideoPage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/ism/')) { const dynamic = await publicNamePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
