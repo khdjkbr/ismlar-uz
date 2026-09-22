@@ -74,6 +74,7 @@
     }
 
     let dataReady = false;
+    let pageViewTracked = false;
     let dataPromise;
     let initialUrlHandled = false;
     const FAVORITES_KEY = 'ismlar_favorites_v3';
@@ -127,6 +128,11 @@
       dataReady = true;
       similarCache.clear();
       loadFavorites();
+      if (!pageViewTracked && window.NAME_ROUTES && location.pathname.startsWith('/ism/')) {
+        const route = location.pathname.replace(/\/$/, '') + '/';
+        const viewed = getBaseNames().find(item => window.NAME_ROUTES[nameKey(item)] === route);
+        if (viewed) { pageViewTracked = true; trackNameEvent(viewed, 'page_view'); }
+      }
       updateFooterStats();
       if (document.getElementById('catalogArea').style.display === 'block') {
         const letter = state.activeLetter;
