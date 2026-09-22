@@ -300,7 +300,7 @@ async function publicVideoPage(request, env, url) {
   if (!env.DB) return null;
   const match = url.pathname.match(/^\/video\/([^/]+)\/?$/); if (!match) return null;
   const requestedSlug = decodeURIComponent(match[1]);
-  const rows = (await env.DB.prepare("SELECT video_id, title, description, published_at FROM videos WHERE status='published' ORDER BY published_at DESC").all()).results || [];
+  let rows = []; try { rows = (await env.DB.prepare("SELECT video_id, title, description, published_at FROM videos WHERE status='published' ORDER BY published_at DESC").all()).results || []; } catch (_) { return null; }
   const row = rows.find((item) => videoSlug(item.title) === requestedSlug || item.video_id === requestedSlug);
   if (!row) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
   const canonicalPath = `/video/${encodeURIComponent(videoSlug(row.title))}/`;
@@ -315,7 +315,7 @@ async function publicVideoPage(request, env, url) {
 }
 async function publicNamePage(request, env, url) {
   const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
-  const slug = decodeURIComponent(match[1]); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
+  const slug = decodeURIComponent(match[1]); let row; try { row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); } catch (_) { return null; } if (!row) return null;
   const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null; let html = await asset.text();
   const description = row.seo_description || `${row.name} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`;
   html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz</title>`);
@@ -330,8 +330,7 @@ async function publicNamePage(request, env, url) {
 async function publicArticlePage(request, env, url) {
   if (!env.DB) return null;
   const match = url.pathname.match(/^\/maqolalar(?:\/([^/]+))?\/?$/); if (!match) return null;
-  const slug = match[1]; const rows = slug ? [] : (await env.DB.prepare("SELECT slug,title,excerpt,category,cover_image,published_at FROM articles WHERE status='published' ORDER BY published_at DESC").all()).results || [];
-  let body = slug ? await env.DB.prepare("SELECT * FROM articles WHERE slug=? AND status='published'").bind(decodeURIComponent(slug)).first() : null;
+  const slug = match[1]; let rows = []; let body = null; try { rows = slug ? [] : ((await env.DB.prepare("SELECT slug,title,excerpt,category,cover_image,published_at FROM articles WHERE status='published' ORDER BY published_at DESC").all()).results || []); body = slug ? await env.DB.prepare("SELECT * FROM articles WHERE slug=? AND status='published'").bind(decodeURIComponent(slug)).first() : null; } catch (_) { return env.ASSETS.fetch(request); }
   const escText = (v) => escapeHtml(v).replace(/\n/g, '<br>');
   if (slug && !body) return new Response('Not found', { status: 404, headers: { 'content-type':'text/plain; charset=utf-8' } });
   const title = body ? (body.seo_title || body.title) : 'Foydali maqolalar | Bolagaism.uz'; const description = body ? (body.seo_description || body.excerpt) : 'Ism tanlash va o‘zbek ismlari haqida foydali maqolalar.';
