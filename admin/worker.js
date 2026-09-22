@@ -269,12 +269,12 @@ function collectionOriginSql(origin) { return origin === "O'zbekcha" ? "origin L
 async function ensureDefaultCollections(env) {
   if (!env.DB) return;
   await ensureNameMetrics(env);
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
-  for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run();
+  try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run(); } catch (_) { return; }
+  for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) { try { await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run(); } catch (_) {} }
 }
 async function collectionRows(env, collection) {
   const where = collectionOriginSql(collection.origin);
-  try { return (await env.DB.prepare(`SELECT n.slug, n.name, n.gender, n.meaning, n.origin FROM names n LEFT JOIN name_metrics m ON m.name_id = n.id WHERE n.status='published' AND ${where} ORDER BY (COALESCE(m.manual_priority,0) * 1000 + COALESCE(m.page_views,0) + COALESCE(m.favorite_adds,0) * 10 + COALESCE(m.search_clicks,0) * 5) DESC, n.name COLLATE NOCASE ASC LIMIT 50`).all()).results || []; } catch (_) { return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || []; }
+  try { return (await env.DB.prepare(`SELECT n.slug, n.name, n.gender, n.meaning, n.origin FROM names n LEFT JOIN name_metrics m ON m.name_id = n.id WHERE n.status='published' AND ${where} ORDER BY (COALESCE(m.manual_priority,0) * 1000 + COALESCE(m.page_views,0) + COALESCE(m.favorite_adds,0) * 10 + COALESCE(m.search_clicks,0) * 5) DESC, n.name COLLATE NOCASE ASC LIMIT 50`).all()).results || []; } catch (_) { try { return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || []; } catch (_) { return []; } }
 }
 function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env) {
@@ -363,9 +363,11 @@ async function publicArticlePage(request, env, url) {
   return new Response(html, { status: 200, headers: { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store' } });
 }
 async function publicCollectionPage(env, url) {
-  await ensureDefaultCollections(env);
+  try { await ensureDefaultCollections(env); } catch (_) {}
   const match = url.pathname.match(/^\/ismlar-toplamlari(?:\/([^/]+))?\/?$/); if (!match) return null;
-  const slug = match[1]; const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC,title ASC").all()).results || [];
+  const slug = match[1]; let collections = [];
+  try { collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC,title ASC").all()).results || []; } catch (_) {}
+  if (!collections.length) collections = DEFAULT_COLLECTIONS.map(([itemSlug,title,description,origin,sort_order]) => ({ slug:itemSlug,title,description,origin,sort_order }));
   if (!slug) {
     const cards = collections.map((item) => `<a class="collection-index-card" href="/ismlar-toplamlari/${encodeURIComponent(item.slug)}/"><span class="eyebrow">${escapeHtml(item.origin)}</span><h2>${escapeHtml(item.title)}</h2><p>${escapeHtml(item.description)}</p><strong>50 ta ismni ko‘rish →</strong></a>`).join('');
     return collectionResponse('Ismlar to‘plamlari | Bolagaism.uz','Kelib chiqishi bo‘yicha o‘zbek ismlari to‘plamlari.',url.pathname,`<section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><span>Ismlar to‘plamlari</span></nav><span class="eyebrow">Ismlar to‘plamlari</span><h1>Kelib chiqishi bo‘yicha ismlar</h1><p class="meaning-lead">Turli kelib chiqishdagi ismlarni solishtiring va farzandingizga mos ismni toping.</p><div class="collection-directory">${cards}</div></section>`);
