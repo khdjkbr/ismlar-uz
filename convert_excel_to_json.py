@@ -58,6 +58,9 @@ if os.path.exists(excel_file):
             raw_name = str(row.iloc[name_idx]).strip() if name_idx < len(row) and not pd.isna(row.iloc[name_idx]) else ""
             if not raw_name or raw_name.lower() in ['nan', 'none', 'ism', 'name']:
                 continue
+            # Bekjon qo‘shimchasi bilan tugaydigan kombinatsion yozuvlarni katalogga kiritmaymiz.
+            if raw_name.lower().endswith('bekjon'):
+                continue
 
             raw_gender = str(row.iloc[gender_idx]).strip().lower() if gender_idx < len(row) and not pd.isna(row.iloc[gender_idx]) else "m"
             gender = 'f' if any(k in raw_gender for k in ['qiz', 'f', 'ayol', 'female']) else 'm'
