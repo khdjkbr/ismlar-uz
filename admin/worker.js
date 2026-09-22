@@ -268,7 +268,6 @@ const DEFAULT_COLLECTIONS = [
 function collectionOriginSql(origin) { return origin === "O'zbekcha" ? "origin LIKE '%O''zbekcha%'" : `origin LIKE '%${String(origin).replace(/'/g, "''")}%'`; }
 async function ensureDefaultCollections(env) {
   if (!env.DB) return;
-  await ensureNameMetrics(env);
   try { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run(); } catch (_) { return; }
   for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) { try { await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run(); } catch (_) {} }
 }
@@ -335,7 +334,7 @@ async function publicVideoPage(request, env, url) {
 }
 async function publicNamePage(request, env, url) {
   const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
-  const slug = decodeURIComponent(match[1]); await ensureNameMetrics(env); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
+  const slug = decodeURIComponent(match[1]); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
   try { await env.DB.prepare('INSERT INTO name_metrics (name_id, page_views, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP) ON CONFLICT(name_id) DO UPDATE SET page_views = page_views + 1, updated_at = CURRENT_TIMESTAMP').bind(String(row.id)).run(); } catch (_) {}
   const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null; let html = await asset.text();
   const description = row.seo_description || `${row.name} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`;
