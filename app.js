@@ -81,6 +81,7 @@
     const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     const similarCache = new Map();
     function nameKey(item) { return item.g + ':' + normalizeStr(item.l); }
+    function cleanOrigin(value) { const seen = new Set(); return String(value || '').split('/').map(part => part.trim()).filter(Boolean).filter(part => { const key = part.toLocaleLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; }).join(' / '); }
     function trackNameEvent(item, event) { try { fetch('/api/public/name-event', { method: 'POST', headers: {'content-type':'application/json'}, keepalive: true, body: JSON.stringify({ name: item.l, gender: item.g, event }) }); } catch (e) {} }
     function saveFavorites() {
       try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites)); } catch (e) {}
@@ -483,7 +484,7 @@
         </div>
         <div class="accordion-body">
           <div class="card-meta-tags">
-            <span class="meta-chip"><b>Kelib chiqishi:</b> ${item.lang || "O'zbekcha"}</span>
+            <span class="meta-chip"><b>Kelib chiqishi:</b> ${cleanOrigin(item.lang) || "O'zbekcha"}</span>
             <span class="meta-chip meta-gender">${item.g === 'm' ? "👦 O'g'il bola" : "👧 Qiz bola"}</span>
           </div>
           <div class="card-meaning-text">${item.m || "Ma'lumot kiritilmagan."}</div>

@@ -24,6 +24,18 @@ CREATE INDEX IF NOT EXISTS idx_names_status ON names(status);
 CREATE INDEX IF NOT EXISTS idx_names_gender ON names(gender);
 CREATE INDEX IF NOT EXISTS idx_names_updated_at ON names(updated_at);
 
+CREATE TABLE IF NOT EXISTS name_origin_reviews (
+  name_id TEXT PRIMARY KEY REFERENCES names(id) ON DELETE CASCADE,
+  raw_origin TEXT NOT NULL DEFAULT '',
+  candidates_json TEXT NOT NULL DEFAULT '[]',
+  source_links_json TEXT NOT NULL DEFAULT '[]',
+  confidence REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'dismissed')),
+  editor_note TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_name_origin_reviews_status ON name_origin_reviews(status);
+
 CREATE TABLE IF NOT EXISTS name_metrics (
   name_id TEXT PRIMARY KEY,
   manual_priority INTEGER NOT NULL DEFAULT 0,
