@@ -299,8 +299,8 @@ async function articleMarkup(env) {
 async function withVideos(response, env) {
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
-  const [markup, articles, collections] = await Promise.all([videoMarkup(env), articleMarkup(env), nameCollectionsMarkup(env)]);
   const html = await response.text();
+  const [markup, articles, collections] = await Promise.all([videoMarkup(env), articleMarkup(env), html.includes('class="concept-hero"') || html.includes('id="stepWelcome"') ? nameCollectionsMarkup(env) : Promise.resolve('')]);
   let updated = html;
   if (articles && updated.includes('article-teasers')) updated = updated.replace(/<section class="[^"]*article-teasers[^"]*">[\s\S]*?<\/section>/, articles);
   if (markup && !updated.includes('data-video-track')) updated = updated.replace('</main>', `${markup}</main>`);
@@ -335,7 +335,6 @@ async function publicVideoPage(request, env, url) {
 async function publicNamePage(request, env, url) {
   const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
   const slug = decodeURIComponent(match[1]); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
-  try { await env.DB.prepare('INSERT INTO name_metrics (name_id, page_views, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP) ON CONFLICT(name_id) DO UPDATE SET page_views = page_views + 1, updated_at = CURRENT_TIMESTAMP').bind(String(row.id)).run(); } catch (_) {}
   const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null; let html = await asset.text();
   const description = row.seo_description || `${row.name} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`;
   html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz</title>`);
