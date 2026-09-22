@@ -258,8 +258,34 @@ async function collectionRows(env, collection) {
 }
 function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env) {
-  if (!env.DB) return '';
-  try { await ensureDefaultCollections(env); const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC, title ASC LIMIT 6").all()).results || []; if (!collections.length) return ''; const cards = await Promise.all(collections.map(async (collection) => { const rows = (await collectionRows(env, collection)).slice(0, 10); return `<article class="collection-panel"><div class="collection-panel-head"><span class="eyebrow">${escapeHtml(collection.origin)}</span><a href="/ismlar-toplamlari/${encodeURIComponent(collection.slug)}/">Barchasi</a></div><div class="collection-name-list">${rows.map(nameCollectionCard).join('')}</div></article>`; })); return `<section class="name-collections" aria-label="Ismlar to‘plamlari"><div class="section-heading-concept"><span class="eyebrow">Ismlar to‘plamlari</span><a href="/ismlar-toplamlari/">Barcha to‘plamlar →</a></div><div class="collections-grid">${cards.join('')}</div></section>`; } catch (_) { return ''; }
+  const render = (collections, rowsBySlug) => {
+    if (!collections.length) return '';
+    const cards = collections.map((collection) => {
+      const rows = (rowsBySlug.get(collection.slug) || []).slice(0, 10);
+      return `<article class="collection-panel"><div class="collection-panel-head"><span class="eyebrow">${escapeHtml(collection.origin)}</span><a href="/ismlar-toplamlari/${encodeURIComponent(collection.slug)}/">Barchasi</a></div><div class="collection-name-list">${rows.map(nameCollectionCard).join('')}</div></article>`;
+    });
+    return `<section class="name-collections" aria-label="Ismlar to‘plamlari"><div class="section-heading-concept"><span class="eyebrow">Ismlar to‘plamlari</span><a href="/ismlar-toplamlari/">Barcha to‘plamlar →</a></div><div class="collections-grid">${cards.join('')}</div></section>`;
+  };
+  try {
+    if (!env.DB) throw new Error('D1 unavailable');
+    await ensureDefaultCollections(env);
+    const collections = (await env.DB.prepare("SELECT slug,title,description,origin FROM name_collections WHERE status='published' ORDER BY sort_order ASC, title ASC LIMIT 6").all()).results || [];
+    const rowsBySlug = new Map(await Promise.all(collections.map(async (collection) => [collection.slug, await collectionRows(env, collection)])));
+    const markup = render(collections, rowsBySlug);
+    if (markup) return markup;
+  } catch (_) {}
+  // Keep the homepage useful even while D1 is unavailable or a legacy schema is being migrated.
+  try {
+    const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', 'https://bolagaism.uz')));
+    const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s);
+    if (!match) return '';
+    const all = JSON.parse(match[1]); const rowsBySlug = new Map();
+    for (const [slug, , , origin] of DEFAULT_COLLECTIONS) {
+      const rows = all.filter((item) => String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).slice(0, 10).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, meaning: item.m || '', origin: item.lang || '' }));
+      rowsBySlug.set(slug, rows);
+    }
+    return render(DEFAULT_COLLECTIONS.map(([slug, title, description, origin]) => ({ slug, title, description, origin })), rowsBySlug);
+  } catch (_) { return ''; }
 }
 async function videoMarkup(env) {
   if (!env.DB) return '';
