@@ -377,6 +377,7 @@ async function publicSitemap(request, env) {
   } catch (_) { return asset; }
 }
 export default { async fetch(request, env) {
+ try {
   const url = new URL(request.url);
   if (url.pathname.startsWith('/api/oshxona/')) return api(request, env);
   if (url.pathname === '/oshxona' || url.pathname.startsWith('/oshxona/')) {
@@ -391,4 +392,7 @@ export default { async fetch(request, env) {
   if (url.pathname.startsWith('/maqolalar')) { const dynamic = await publicArticlePage(request, env, url); if (dynamic) return withVideos(dynamic, env); }
   if (url.pathname.startsWith('/ismlar-toplamlari')) { const dynamic = await publicCollectionPage(env, url); if (dynamic) return dynamic; }
   return withVideos(await env.ASSETS.fetch(request), env);
+ } catch (_) {
+  return env.ASSETS.fetch(request);
+ }
 } };
