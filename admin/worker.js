@@ -13,6 +13,23 @@ async function submitIndexNow(paths) {
 }
 function accessEmail(request) { return request.headers.get('Cf-Access-Authenticated-User-Email') || request.headers.get('cf-access-authenticated-user-email') || ''; }
 function cookie(request, name) { const value = request.headers.get('Cookie') || ''; const match = value.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`)); return match ? decodeURIComponent(match[1]) : ''; }
+async function ensureNameMetrics(env) {
+  if (!env.DB) return;
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_metrics (name_id TEXT PRIMARY KEY, manual_priority INTEGER NOT NULL DEFAULT 0, page_views INTEGER NOT NULL DEFAULT 0, favorite_adds INTEGER NOT NULL DEFAULT 0, search_clicks INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
+  try { await env.DB.prepare(`ALTER TABLE names ADD COLUMN manual_priority INTEGER NOT NULL DEFAULT 0`).run(); } catch (_) {}
+}
+async function recordNameEvent(request, env) {
+  if (request.method !== 'POST' || !env.DB) return json({ error: 'Not found' }, 404);
+  try {
+    await ensureNameMetrics(env); const body = await request.json(); const event = String(body.event || '');
+    if (!['page_view', 'favorite_add', 'search_click'].includes(event)) return json({ error: 'Invalid event' }, 400);
+    const name = String(body.name || '').trim(); const gender = String(body.gender || '').trim(); if (!name || !['m','f'].includes(gender)) return json({ error: 'Invalid name' }, 400);
+    const row = await env.DB.prepare('SELECT id FROM names WHERE name = ? AND gender = ? LIMIT 1').bind(name, gender).first(); if (!row) return json({ ok: true });
+    const column = event === 'page_view' ? 'page_views' : event === 'favorite_add' ? 'favorite_adds' : 'search_clicks';
+    await env.DB.prepare(`INSERT INTO name_metrics (name_id, ${column}, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP) ON CONFLICT(name_id) DO UPDATE SET ${column} = ${column} + 1, updated_at = CURRENT_TIMESTAMP`).bind(String(row.id)).run();
+    return json({ ok: true });
+  } catch (_) { return json({ ok: true }); }
+}
 async function digest(value) { const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)); return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join(''); }
 async function sessionUser(request, env) {
   const trusted = accessEmail(request).toLowerCase();
@@ -123,11 +140,12 @@ async function authApi(request, env, url) {
   return null;
 }
 async function api(request, env) {
-  const url = new URL(request.url); const authResponse = await authApi(request, env, url); if (authResponse) return authResponse;
+  const url = new URL(request.url); if (url.pathname === '/api/public/name-event') return recordNameEvent(request, env); const authResponse = await authApi(request, env, url); if (authResponse) return authResponse;
   const email = await sessionUser(request, env); if (!email) return json({ error: 'Authentication required' }, 401);
   const articlesApi = url.pathname.startsWith('/api/oshxona/articles');
   const videosApi = url.pathname.startsWith('/api/oshxona/videos');
   const collectionsApi = url.pathname.startsWith('/api/oshxona/collections');
+  if (url.pathname.startsWith('/api/oshxona/names')) await ensureNameMetrics(env);
   if (request.method === 'GET' && url.pathname === '/api/oshxona/analytics/google') {
     try { return json(await googleAnalyticsReport(env)); } catch (error) { return json({ configured: true, error: `Google Analytics API: ${error.message}` }, 502); }
   }
@@ -147,6 +165,7 @@ async function api(request, env) {
   if (collectionsApi) {
     await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('draft','published','archived')), sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
     await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_name_collections_status_order ON name_collections(status, sort_order)`).run();
+    await ensureNameMetrics(env);
   }
   if (request.method === 'POST' && url.pathname === '/api/oshxona/import') {
     const offset = Math.max(0, Number(url.searchParams.get('offset') || 0));
@@ -171,7 +190,7 @@ async function api(request, env) {
   }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/names-lite') {
     const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url))); const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s); if (!match) return json({ error: 'Names data is unavailable' }, 503);
-    const all = JSON.parse(match[1]); const normalizeLetter = (value) => String(value || '').trim().toLowerCase().replace(/[‘’ʻ]/g, "'"); const q = (url.searchParams.get('q') || '').trim().toLowerCase(); const genders = (url.searchParams.get('gender') || '').split(',').map((value) => value.trim()).filter(Boolean); const originsFilter = (url.searchParams.get('origin') || '').split(',').map((value) => value.trim().toLowerCase()).filter(Boolean); const lettersFilter = normalizeLetter(url.searchParams.get('letter') || ''); const statuses = (url.searchParams.get('status') || '').split(',').map((value) => value.trim()).filter(Boolean); const offset = Math.max(0, Number(url.searchParams.get('offset') || 0)); const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit') || 50))); const filtered = all.filter((item) => { const name = String(item.l || ''); const variants = String(item.k || ''); const itemOrigin = String(item.lang || ''); return (!q || name.toLowerCase().includes(q) || variants.toLowerCase().includes(q)) && (!genders.length || genders.includes(item.g)) && (!originsFilter.length || originsFilter.includes(itemOrigin.toLowerCase())) && (!lettersFilter || normalizeLetter(name).startsWith(lettersFilter)) && (!statuses.length || statuses.includes('published')); }); const page = filtered.slice(offset, offset + limit); const rows = page.map((item) => ({ id: String(item.id), slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, origin: item.lang || '', meaning: item.m || '', variants: item.k || '', status: 'published', seo_description: `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`, updated_at: '' })); const origins = [...new Set(all.map((item) => String(item.lang || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)); const letters = [...new Set(all.map((item) => String(item.l || '').trim().charAt(0).toUpperCase()).filter(Boolean))].sort((a, b) => a.localeCompare(b)); return json({ user: email, rows, total: filtered.length, offset, limit, hasMore: offset + rows.length < filtered.length, origins, letters, counts: { total: all.length, published: all.length, review: 0, draft: 0 }, fallback: true });
+    const all = JSON.parse(match[1]); const normalizeLetter = (value) => String(value || '').trim().toLowerCase().replace(/[‘’ʻ]/g, "'"); const q = (url.searchParams.get('q') || '').trim().toLowerCase(); const genders = (url.searchParams.get('gender') || '').split(',').map((value) => value.trim()).filter(Boolean); const originsFilter = (url.searchParams.get('origin') || '').split(',').map((value) => value.trim().toLowerCase()).filter(Boolean); const lettersFilter = normalizeLetter(url.searchParams.get('letter') || ''); const statuses = (url.searchParams.get('status') || '').split(',').map((value) => value.trim()).filter(Boolean); const offset = Math.max(0, Number(url.searchParams.get('offset') || 0)); const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit') || 50))); const filtered = all.filter((item) => { const name = String(item.l || ''); const variants = String(item.k || ''); const itemOrigin = String(item.lang || ''); return (!q || name.toLowerCase().includes(q) || variants.toLowerCase().includes(q)) && (!genders.length || genders.includes(item.g)) && (!originsFilter.length || originsFilter.includes(itemOrigin.toLowerCase())) && (!lettersFilter || normalizeLetter(name).startsWith(lettersFilter)) && (!statuses.length || statuses.includes('published')); }); const page = filtered.slice(offset, offset + limit); const metricRows = env.DB ? ((await env.DB.prepare('SELECT name_id, manual_priority FROM name_metrics').all()).results || []) : []; const priorityById = new Map(metricRows.map((metric) => [String(metric.name_id), Number(metric.manual_priority || 0)])); const rows = page.map((item) => ({ id: String(item.id), slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, origin: item.lang || '', meaning: item.m || '', variants: item.k || '', status: 'published', manual_priority: priorityById.get(String(item.id)) || 0, seo_description: `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`, updated_at: '' })); const origins = [...new Set(all.map((item) => String(item.lang || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)); const letters = [...new Set(all.map((item) => String(item.l || '').trim().charAt(0).toUpperCase()).filter(Boolean))].sort((a, b) => a.localeCompare(b)); return json({ user: email, rows, total: filtered.length, offset, limit, hasMore: offset + rows.length < filtered.length, origins, letters, counts: { total: all.length, published: all.length, review: 0, draft: 0 }, fallback: true });
   }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/names') {
     const q = (url.searchParams.get('q') || '').trim(); const status = url.searchParams.get('status') || ''; const where = []; const args = [];
@@ -182,7 +201,7 @@ async function api(request, env) {
       const counts = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(status = 'published') AS published, SUM(status = 'review') AS review, SUM(status = 'draft') AS draft FROM names").first(); return json({ user: email, rows: rows.results || [], counts });
     } catch (error) {
       const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url))); const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s); if (!match) return json({ error: 'Names data is unavailable' }, 503);
-      const all = JSON.parse(match[1]); const normalized = q.toLowerCase(); const filtered = all.filter((item) => (!normalized || String(item.l || '').toLowerCase().includes(normalized) || String(item.k || '').toLowerCase().includes(normalized)) && (!status || status === 'published')).slice(0, 100); const rows = filtered.map((item) => ({ id: String(item.id), slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, origin: item.lang || '', meaning: item.m || '', variants: item.k || '', status: 'published', seo_description: `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`, updated_at: '' })); return json({ user: email, rows, counts: { total: all.length, published: all.length, review: 0, draft: 0 }, fallback: true });
+      const all = JSON.parse(match[1]); const normalized = q.toLowerCase(); const filtered = all.filter((item) => (!normalized || String(item.l || '').toLowerCase().includes(normalized) || String(item.k || '').toLowerCase().includes(normalized)) && (!status || status === 'published')).slice(0, 100); const rows = filtered.map((item) => ({ id: String(item.id), slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, origin: item.lang || '', meaning: item.m || '', variants: item.k || '', status: 'published', manual_priority: 0, seo_description: `${item.l} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`, updated_at: '' })); return json({ user: email, rows, counts: { total: all.length, published: all.length, review: 0, draft: 0 }, fallback: true });
     }
   }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/articles') {
@@ -228,11 +247,11 @@ async function api(request, env) {
   }
   if (request.method === 'POST' || request.method === 'PATCH') {
     const body = await request.json(); if (!body.name || !['m', 'f'].includes(body.gender)) return json({ error: 'Name and gender are required' }, 400); const id = url.pathname.split('/').pop(); const now = new Date().toISOString();
-    if (request.method === 'POST') { const newId = crypto.randomUUID(); const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, ''); await env.DB.prepare('INSERT INTO names (id, slug, name, gender, meaning, origin, variants, status, seo_description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, slug, body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now).run(); const snapshot = JSON.stringify({ id: newId, slug, ...body }); await env.DB.prepare('INSERT INTO name_revisions (name_id, snapshot_json, action, editor_email) VALUES (?, ?, ?, ?)').bind(newId, snapshot, 'created', email).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('created', 'name', newId, email, JSON.stringify({ name: body.name })).run(); if (body.status === 'published') await submitIndexNow(['/ism/' + slug + '/']); return json({ id: newId }, 201); }
+    if (request.method === 'POST') { const newId = crypto.randomUUID(); const slug = body.slug || body.name.toLowerCase().replace(/[^a-z0-9а-яё]+/gi, '-').replace(/^-|-$/g, ''); await env.DB.prepare('INSERT INTO names (id, slug, name, gender, meaning, origin, variants, status, seo_description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(newId, slug, body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now).run(); await env.DB.prepare('INSERT INTO name_metrics (name_id, manual_priority) VALUES (?, ?) ON CONFLICT(name_id) DO UPDATE SET manual_priority = excluded.manual_priority').bind(newId, Math.max(0, Number(body.manual_priority || 0))).run(); const snapshot = JSON.stringify({ id: newId, slug, ...body }); await env.DB.prepare('INSERT INTO name_revisions (name_id, snapshot_json, action, editor_email) VALUES (?, ?, ?, ?)').bind(newId, snapshot, 'created', email).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('created', 'name', newId, email, JSON.stringify({ name: body.name })).run(); if (body.status === 'published') await submitIndexNow(['/ism/' + slug + '/']); return json({ id: newId }, 201); }
     const previous = await env.DB.prepare('SELECT * FROM names WHERE id = ?').bind(id).first();
     if (!previous) return json({ error: 'Name not found' }, 404);
     await env.DB.prepare('INSERT INTO name_revisions (name_id, snapshot_json, action, editor_email) VALUES (?, ?, ?, ?)').bind(id, JSON.stringify(previous), body.status === 'published' && previous.status !== 'published' ? 'published' : 'updated', email).run();
-    await env.DB.prepare('UPDATE names SET name = ?, gender = ?, meaning = ?, origin = ?, variants = ?, status = ?, seo_description = ?, updated_at = ?, published_at = CASE WHEN ? = \'published\' THEN COALESCE(published_at, ?) ELSE published_at END WHERE id = ?').bind(body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now, body.status || 'draft', now, id).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('updated', 'name', id, email, JSON.stringify({ name: body.name, status: body.status })).run(); if (body.status === 'published' || previous.status === 'published') await submitIndexNow(['/ism/' + (body.slug || previous.slug) + '/']); return json({ id });
+    await env.DB.prepare('UPDATE names SET name = ?, gender = ?, meaning = ?, origin = ?, variants = ?, status = ?, seo_description = ?, updated_at = ?, published_at = CASE WHEN ? = \'published\' THEN COALESCE(published_at, ?) ELSE published_at END WHERE id = ?').bind(body.name, body.gender, body.meaning || '', body.origin || '', body.variants || '', body.status || 'draft', body.seo_description || '', now, body.status || 'draft', now, id).run(); await env.DB.prepare('INSERT INTO name_metrics (name_id, manual_priority) VALUES (?, ?) ON CONFLICT(name_id) DO UPDATE SET manual_priority = excluded.manual_priority').bind(id, Math.max(0, Number(body.manual_priority || 0))).run(); await env.DB.prepare('INSERT INTO audit_log (action, entity_type, entity_id, editor_email, metadata_json) VALUES (?, ?, ?, ?, ?)').bind('updated', 'name', id, email, JSON.stringify({ name: body.name, status: body.status })).run(); if (body.status === 'published' || previous.status === 'published') await submitIndexNow(['/ism/' + (body.slug || previous.slug) + '/']); return json({ id });
   }
   return json({ error: 'Not found' }, 404);
 }
@@ -249,12 +268,13 @@ const DEFAULT_COLLECTIONS = [
 function collectionOriginSql(origin) { return origin === "O'zbekcha" ? "origin LIKE '%O''zbekcha%'" : `origin LIKE '%${String(origin).replace(/'/g, "''")}%'`; }
 async function ensureDefaultCollections(env) {
   if (!env.DB) return;
+  await ensureNameMetrics(env);
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS name_collections (id TEXT PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', origin TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'published', sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`).run();
   for (const [slug, title, description, origin, order] of DEFAULT_COLLECTIONS) await env.DB.prepare('INSERT OR IGNORE INTO name_collections (id, slug, title, description, origin, status, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(`builtin-${slug}`, slug, title, description, origin, 'published', order).run();
 }
 async function collectionRows(env, collection) {
   const where = collectionOriginSql(collection.origin);
-  return (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
+  return (await env.DB.prepare(`SELECT n.slug, n.name, n.gender, n.meaning, n.origin FROM names n LEFT JOIN name_metrics m ON m.name_id = n.id WHERE n.status='published' AND ${where} ORDER BY (COALESCE(m.manual_priority,0) * 1000 + COALESCE(m.page_views,0) + COALESCE(m.favorite_adds,0) * 10 + COALESCE(m.search_clicks,0) * 5) DESC, n.name COLLATE NOCASE ASC LIMIT 50`).all()).results || [];
 }
 function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env) {
@@ -315,7 +335,8 @@ async function publicVideoPage(request, env, url) {
 }
 async function publicNamePage(request, env, url) {
   const match = url.pathname.match(/^\/ism\/([^/]+)\/?$/); if (!match || !env.DB) return null;
-  const slug = decodeURIComponent(match[1]); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
+  const slug = decodeURIComponent(match[1]); await ensureNameMetrics(env); const row = await env.DB.prepare('SELECT * FROM names WHERE slug = ? AND status = \'published\'').bind(slug).first(); if (!row) return null;
+  try { await env.DB.prepare('INSERT INTO name_metrics (name_id, page_views, updated_at) VALUES (?, 1, CURRENT_TIMESTAMP) ON CONFLICT(name_id) DO UPDATE SET page_views = page_views + 1, updated_at = CURRENT_TIMESTAMP').bind(String(row.id)).run(); } catch (_) {}
   const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null; let html = await asset.text();
   const description = row.seo_description || `${row.name} ismining ma'nosi, kelib chiqishi va yozilish variantlari.`;
   html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeHtml(row.name)} ismining ma’nosi | Bolagaism.uz</title>`);
@@ -379,7 +400,7 @@ async function publicSitemap(request, env) {
 }
 export default { async fetch(request, env) {
   const url = new URL(request.url);
-  if (url.pathname.startsWith('/api/oshxona/')) return api(request, env);
+  if (url.pathname.startsWith('/api/oshxona/') || url.pathname === '/api/public/name-event') return api(request, env);
   if (url.pathname === '/oshxona' || url.pathname.startsWith('/oshxona/')) {
     const user = await sessionUser(request, env);
     if (!user && !url.pathname.startsWith('/oshxona/login')) return Response.redirect(`${url.origin}/oshxona/login`, 302);

@@ -80,6 +80,7 @@
     const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     const similarCache = new Map();
     function nameKey(item) { return item.g + ':' + normalizeStr(item.l); }
+    function trackNameEvent(item, event) { try { fetch('/api/public/name-event', { method: 'POST', headers: {'content-type':'application/json'}, keepalive: true, body: JSON.stringify({ name: item.l, gender: item.g, event }) }); } catch (e) {} }
     function saveFavorites() {
       try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites)); } catch (e) {}
     }
@@ -312,7 +313,7 @@
       if (matches.length === 0) {
         list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">Bunday ism topilmadi</div>`;
       } else {
-        matches.slice(0, 50).forEach(item => list.appendChild(createNameAccordionElement(item)));
+        matches.slice(0, 50).forEach(item => list.appendChild(createNameAccordionElement(item, 'search')));
       }
     };
 
@@ -352,6 +353,7 @@
         state.favorites.splice(idx, 1);
       } else {
         state.favorites.push({ key, addedAt: Date.now() });
+        trackNameEvent(item, 'favorite_add');
       }
       try {
         saveFavorites();
@@ -438,7 +440,7 @@
       url.searchParams.set('ism', nameKey(item));
       return url.href;
     }
-    function createNameAccordionElement(item) {
+    function createNameAccordionElement(item, source = 'browse') {
       const primaryName = item.l || '';
       const isFav = state.favorites.some(f => f.key === nameKey(item));
       const wrap = document.createElement('div');
@@ -493,6 +495,7 @@
 
       const headerEl = wrap.querySelector('.accordion-header');
       headerEl.addEventListener('click', () => {
+        if (source === 'search') trackNameEvent(item, 'search_click');
         wrap.classList.toggle('open');
 
       });

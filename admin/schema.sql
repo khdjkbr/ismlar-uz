@@ -24,6 +24,15 @@ CREATE INDEX IF NOT EXISTS idx_names_status ON names(status);
 CREATE INDEX IF NOT EXISTS idx_names_gender ON names(gender);
 CREATE INDEX IF NOT EXISTS idx_names_updated_at ON names(updated_at);
 
+CREATE TABLE IF NOT EXISTS name_metrics (
+  name_id TEXT PRIMARY KEY,
+  manual_priority INTEGER NOT NULL DEFAULT 0,
+  page_views INTEGER NOT NULL DEFAULT 0,
+  favorite_adds INTEGER NOT NULL DEFAULT 0,
+  search_clicks INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS name_revisions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name_id TEXT NOT NULL REFERENCES names(id) ON DELETE CASCADE,
