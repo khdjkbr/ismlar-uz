@@ -275,7 +275,7 @@ async function collectionRows(env, collection) {
   const rows = (await env.DB.prepare(`SELECT slug, name, gender, meaning, origin FROM names WHERE status='published' AND ${where} ORDER BY name COLLATE NOCASE ASC LIMIT 300`).all()).results || [];
   return rows.filter((row) => isSingleName(row.name)).slice(0, 50);
 }
-function nameCollectionCard(row) { return `<a class="collection-name-card" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
+function nameCollectionCard(row) { const genderClass = row.gender === 'f' ? 'gender-f' : 'gender-m'; return `<a class="collection-name-card ${genderClass}" href="/ism/${encodeURIComponent(row.slug)}/"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meaning || row.origin || '')}</span></a>`; }
 async function nameCollectionsMarkup(env, request) {
   const render = (collections, rowsBySlug) => {
     if (!collections.length) return '';
@@ -301,7 +301,7 @@ async function nameCollectionsMarkup(env, request) {
     if (!match) return '';
     const all = JSON.parse(match[1]); const rowsBySlug = new Map();
     for (const [slug, , , origin] of DEFAULT_COLLECTIONS) {
-      const rows = all.filter((item) => isSingleName(item.l) && String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).slice(0, 10).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, meaning: item.m || '', origin: item.lang || '' }));
+      const rows = all.filter((item) => isSingleName(item.l) && String(item.lang || '').toLowerCase().includes(origin.toLowerCase().replace('o\'zbekcha', 'o\'zbekcha'))).slice(0, 10).map((item) => ({ slug: String(item.l || '').toLowerCase().replace(/[^a-z0-9а-яё']+/gi, '-').replace(/^-|-$/g, ''), name: item.l, gender: item.g, meaning: item.m || '', origin: item.lang || '' }));
       rowsBySlug.set(slug, rows);
     }
     return render(DEFAULT_COLLECTIONS.map(([slug, title, description, origin]) => ({ slug, title, description, origin })), rowsBySlug);
