@@ -443,9 +443,15 @@ async function publicCollectionPage(env, url) {
   return collectionResponse(title, description, url.pathname, `<section class="paper collection-index"><nav class="breadcrumbs"><a href="/">Bosh sahifa</a><span>›</span><a href="/ismlar-toplamlari/">Ismlar to‘plamlari</a><span>›</span><span>${escapeHtml(collection.title)}</span></nav><span class="eyebrow">${escapeHtml(collection.origin)}</span><h1>${escapeHtml(collection.title)}</h1><p class="meaning-lead">${escapeHtml(description)}</p><div class="collection-toolbar"><span>Top ${rows.length} ism</span><select aria-label="Filtr"><option>Alifbo bo‘yicha</option></select></div><div class="collection-name-grid">${cards || '<p>Bu kelib chiqish bo‘yicha hozircha ism topilmadi.</p>'}</div></section>`, listSchema);
 }
 function collectionResponse(title, description, path, content, schema) { const canonical = `https://bolagaism.uz${path}`; const data = schema || { '@context':'https://schema.org','@type':'CollectionPage',name:title,description,url:canonical,inLanguage:'uz' }; return new Response(`<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><meta name="robots" content="index,follow"><link rel="canonical" href="${canonical}"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/seo.css"><link rel="stylesheet" href="/design.css"><script type="application/ld+json">${JSON.stringify(data).replace(/<\/script/gi,'<\\/script>')}</script></head><body><header class="sticky-header"><div class="header-container"><div class="brand-row"><a class="brand-logo" href="/"><span class="logo-icon">🍼</span><span class="logo-text">BolagaIsm<span class="logo-tld">.uz</span></span></a></div></div></header><main id="main" class="page-shell">${content}</main><footer class="site-footer"><div class="container"><strong>Bolagaism.uz</strong><p>Farzandingiz uchun ma'noli ism tanlang.</p><nav class="footer-links"><a href="/video/">Videolar</a><a href="/maqolalar/">Maqolalar</a></nav></div></footer></body></html>`,{status:200,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}}); }
+function appendCoreSitemapUrls(xml) {
+  const existing = new Set([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]));
+  const paths = ['/video/', '/maqolalar/', '/ismlar-toplamlari/', ...DEFAULT_COLLECTIONS.map(([slug]) => `/ismlar-toplamlari/${slug}/`)];
+  const entries = paths.filter((path) => !existing.has(`https://bolagaism.uz${path}`)).map((path) => `<url><loc>https://bolagaism.uz${path}</loc></url>`);
+  return entries.length ? xml.replace('</urlset>', `${entries.join('')}</urlset>`) : xml;
+}
 async function publicSitemap(request, env) {
-  if (!env.DB) return null;
   const asset = await env.ASSETS.fetch(request); if (!asset.ok) return null;
+  if (!env.DB) return new Response(appendCoreSitemapUrls(await asset.text()), { status: 200, headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=300' } });
   try {
     let xml = await asset.text();
     await ensureDefaultCollections(env);
@@ -459,11 +465,12 @@ async function publicSitemap(request, env) {
     const add = (path, updated) => { const loc = `https://bolagaism.uz${path}`; if (existing.has(loc)) return; existing.add(loc); const date = (updated || '').slice(0, 10); entries.push(`<url><loc>${loc}</loc>${date ? `<lastmod>${date}</lastmod>` : ''}</url>`); };
     for (const row of (articles.results || [])) add(`/maqolalar/${encodeURIComponent(row.slug)}/`, row.updated_at || row.published_at);
     for (const row of (videos.results || [])) add(`/video/${encodeURIComponent(videoSlug(row.title))}/`, row.updated_at || row.published_at);
-    add('/video/'); add('/ismlar-toplamlari/');
+    add('/video/'); add('/maqolalar/'); add('/ismlar-toplamlari/');
     for (const row of (collections.results || [])) add(`/ismlar-toplamlari/${encodeURIComponent(row.slug)}/`, row.updated_at);
+    for (const [slug] of DEFAULT_COLLECTIONS) add(`/ismlar-toplamlari/${slug}/`);
     if (entries.length) xml = xml.replace('</urlset>', `${entries.join('')}</urlset>`);
     return new Response(xml, { status: 200, headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=300' } });
-  } catch (_) { return asset; }
+  } catch (_) { return new Response(appendCoreSitemapUrls(await asset.text()), { status: 200, headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=300' } }); }
 }
 export default { async fetch(request, env) {
  try {
