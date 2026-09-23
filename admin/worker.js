@@ -146,6 +146,14 @@ async function api(request, env) {
   const articlesApi = url.pathname.startsWith('/api/oshxona/articles');
   const videosApi = url.pathname.startsWith('/api/oshxona/videos');
   const collectionsApi = url.pathname.startsWith('/api/oshxona/collections');
+  if (request.method === 'GET' && url.pathname === '/api/oshxona/origin-reviews') {
+    const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url))); const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s); if (!match) return json({ error: 'Names data is unavailable' }, 503);
+    const all = JSON.parse(match[1]); const flagged = all.filter((item) => originCandidates(item.lang).length > 1 || normalizeOriginValue(item.lang) !== String(item.lang || '').trim()); const rows = flagged.slice(0, 200).map((item) => {
+      const candidates = originCandidates(item.lang); const share = Math.round(100 / Math.max(candidates.length, 1));
+      return { id: String(item.id), name: item.l, gender: item.g, raw_origin: item.lang || '', normalized_origin: normalizeOriginValue(item.lang), candidates: candidates.map((origin, index) => ({ origin, confidence: index === candidates.length - 1 ? 100 - share * (candidates.length - 1) : share })), reason: candidates.length > 1 ? 'Bir nechta kelib chiqish ko‘rsatilgan' : 'Takroriy qiymat', source: 'Avtomatik katalog tekshiruvi' };
+    });
+    return json({ user: email, rows, total: flagged.length, shown: rows.length, note: 'Foizlar boshlang‘ich taxmin bo‘lib, qo‘lda tasdiqlanishi kerak.' });
+  }
   if (request.method === 'GET' && url.pathname === '/api/oshxona/analytics/google') {
     try { return json(await googleAnalyticsReport(env)); } catch (error) { return json({ configured: true, error: `Google Analytics API: ${error.message}` }, 502); }
   }
@@ -463,14 +471,6 @@ export default { async fetch(request, env) {
   if (url.pathname.startsWith('/api/oshxona/') || url.pathname === '/api/public/name-event') {
     try { return await api(request, env); }
     catch (error) { return json({ error: `Worker API: ${error?.message || 'Unknown error'}` }, 500); }
-  }
-  if (request.method === 'GET' && url.pathname === '/api/oshxona/origin-reviews') {
-    const source = await env.ASSETS.fetch(new Request(new URL('/names_data.js', request.url))); const text = await source.text(); const match = text.match(/window\.ALL_NAMES\s*=\s*(\[.*\])\s*;?\s*$/s); if (!match) return json({ error: 'Names data is unavailable' }, 503);
-    const all = JSON.parse(match[1]); const flagged = all.filter((item) => originCandidates(item.lang).length > 1 || normalizeOriginValue(item.lang) !== String(item.lang || '').trim()); const rows = flagged.slice(0, 200).map((item) => {
-      const candidates = originCandidates(item.lang); const share = Math.round(100 / Math.max(candidates.length, 1));
-      return { id: String(item.id), name: item.l, gender: item.g, raw_origin: item.lang || '', normalized_origin: normalizeOriginValue(item.lang), candidates: candidates.map((origin, index) => ({ origin, confidence: index === candidates.length - 1 ? 100 - share * (candidates.length - 1) : share })), reason: candidates.length > 1 ? 'Bir nechta kelib chiqish ko‘rsatilgan' : 'Takroriy qiymat', source: 'Avtomatik katalog tekshiruvi' };
-    });
-    return json({ user: email, rows, total: flagged.length, shown: rows.length, note: 'Foizlar boshlang‘ich taxmin bo‘lib, qo‘lda tasdiqlanishi kerak.' });
   }
   if (url.pathname === '/oshxona' || url.pathname.startsWith('/oshxona/')) {
     const user = await sessionUser(request, env);
